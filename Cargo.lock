@@ -273,6 +273,7 @@ dependencies = [
 name = "gomarkable"
 version = "0.1.0"
 dependencies = [
+ "cgmath",
  "libremarkable",
 ]
 

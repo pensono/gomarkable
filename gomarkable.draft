@@ -1,0 +1,4 @@
+name=gomarkable
+desc=Go game for the reMarkable
+call=/home/root/gomarkable
+which=gomarkable
