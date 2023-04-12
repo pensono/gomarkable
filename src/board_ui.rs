@@ -1,5 +1,5 @@
 use std::cmp::min;
-use cgmath::{Array, ElementWise, EuclideanSpace, Point2, vec2, Vector2};
+use cgmath::{Array, ElementWise, EuclideanSpace, Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, waveform_mode};
 use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh};
@@ -12,8 +12,9 @@ pub struct BoardUi {
     board_start: Point2<i32>,
     board_size: Vector2<i32>,
     square_size: Vector2<i32>,
-    stone_radius: u32,
+    hoshi_radius: u32,
     line_width: u32,
+    stone_radius: u32,
 }
 
 impl BoardUi {
@@ -21,6 +22,7 @@ impl BoardUi {
         let minimum_border = 100i32;
         let line_width = 3u32;
         let stone_gap = 2i32;
+        let star_radius = 8u32;
 
         let (screen_height, screen_width) = ctx.get_dimensions();
         let screen_size = vec2(screen_width as i32, screen_height as i32);
@@ -38,8 +40,9 @@ impl BoardUi {
             board_start,
             board_size,
             square_size,
-            stone_radius,
+            hoshi_radius: star_radius,
             line_width,
+            stone_radius,
         }
     }
 
@@ -50,8 +53,6 @@ impl BoardUi {
             let board_position = Point2::from_vec(finger.pos.cast().unwrap() - self.board_start);
             let point = Point2::from_vec((board_position + (self.square_size / 2)).to_vec().div_element_wise(self.square_size));
 
-            eprintln!("Point: {:?}", point);
-
             if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
                 state.play(point.cast().unwrap());
                 self.draw_board(state, ctx, false);
@@ -59,10 +60,22 @@ impl BoardUi {
         }
     }
 
+    fn board_to_screen(self: &BoardUi, point: Point2<usize>) -> Point2<i32> {
+        self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32)
+    }
+
     pub fn draw_board(self: &BoardUi, state: &go::BoardState, ctx: &mut ApplicationContext, full_refresh: bool) {
         let fb = ctx.get_framebuffer_ref();
 
-        // Draw the board
+        // Board background
+        // Not sure if I like it yet
+        // fb.fill_rect(
+        //     self.board_start - self.square_size,
+        //     (self.board_size + self.square_size * 2).cast().unwrap(),
+        //     color::GRAY(0x1a),
+        // );
+
+        // Draw the board outline
         fb.draw_rect(
             self.board_start,
             self.board_size.cast().unwrap(),
@@ -72,20 +85,28 @@ impl BoardUi {
 
         for i in 1..(self.size-1) {
             // Draw the vertical lines
-            let vertical_start = self.board_start + (self.square_size.x_component() * i as i32);
+            let vertical_start = self.board_to_screen(point2(i, 0));
             fb.draw_line(vertical_start, vertical_start + self.board_size.y_component(), self.line_width, color::BLACK);
 
             // Draw the horizontal lines
-            let horizontal_start = self.board_start + (self.square_size.y_component() * i as i32);
+            let horizontal_start = self.board_to_screen(point2(0, i));
             fb.draw_line(horizontal_start, horizontal_start + self.board_size.x_component(), self.line_width, color::BLACK);
         }
 
+        // Draw star points
+        // TODO Won't work for sizes other than 19x19 but that's fine for now
+        for x in [3, 9, 15] {
+            for y in [3, 9, 15] {
+                fb.fill_circle(self.board_to_screen(point2(x, y)), self.hoshi_radius, color::BLACK);
+            }
+        }
+
         // Draw the stones
-        for i in 0..self.size {
-            for j in 0..self.size {
-                let position = self.board_start + (self.square_size.x_component() * i as i32) + (self.square_size.y_component() * j as i32);
-                // Both of these need aliasing!
-                match state.board[i][j] {
+        for x in 0..self.size {
+            for y in 0..self.size {
+                let position = self.board_to_screen(point2(x, y));
+                // TODO Both of these need aliasing!
+                match state.board[x][y] {
                     Some(go::Player::Black) => {
                         fb.fill_circle(position.into(), self.stone_radius, color::BLACK);
                     }
@@ -101,15 +122,18 @@ impl BoardUi {
 
         // Draw the last move
         if let Some(point) = state.last_move {
-            let position = self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32);
-            fb.draw_circle(position, self.stone_radius / 2, color::GRAY(128));
+            let color = match state.current_player {
+                go::Player::Black => color::WHITE,
+                go::Player::White => color::BLACK,
+            };
+            fb.draw_circle(self.board_to_screen(point), self.stone_radius / 2, color);
         }
 
         // Draw ko
         if let Some(point) = state.ko {
-            let center = self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32);
+            let center = self.board_to_screen(point);
             let size = vec2(self.stone_radius as i32, self.stone_radius as i32);
-            fb.draw_rect(center - size / 2, size.cast().unwrap(), self.line_width, color::BLACK);
+            fb.draw_rect(center - size / 2, size.cast().unwrap(), self.line_width / 2, color::BLACK);
         }
 
         if full_refresh {
@@ -129,7 +153,5 @@ impl BoardUi {
                 true
             );
         }
-
-        eprintln!("Refreshed!");
     }
 }

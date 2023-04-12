@@ -22,9 +22,7 @@ pub struct BoardState {
     pub current_player: Player,
     // The current board state
     pub board: Vec<Vec<Option<Player>>>,
-
     pub last_move: Option<Point2<usize>>,
-    
     pub ko: Option<Point2<usize>>,
 }
 

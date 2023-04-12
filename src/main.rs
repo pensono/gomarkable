@@ -28,21 +28,11 @@ fn main() {
     app.clear(true);
 
     let mut board_ui = board_ui::BoardUi::new(19, &app);
-
     let mut state = go::BoardState::new(19);
-    state.board[0][0] = Option::from(go::Player::Black);
-    state.board[3][3] = Option::from(go::Player::Black);
-    state.board[3][4] = Option::from(go::Player::Black);
-    state.board[9][9] = Option::from(go::Player::White);
-    state.board[12][9] = Option::from(go::Player::White);
-    state.last_move = Option::from(point2(9, 9));
-    state.ko = Option::from(point2(4, 9));
 
     board_ui.draw_board(&state, &mut app, true);
 
     app.start_event_loop(false, true, false, |ctx: &mut ApplicationContext, event: InputEvent| {
-        eprintln!("Event: {:?}", event);
-
         if let InputEvent::MultitouchEvent { event, .. } = event {
             board_ui.handle_event(event, ctx, &mut state);
         }
