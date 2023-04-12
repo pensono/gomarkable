@@ -1,8 +1,9 @@
 use std::cmp::min;
-use cgmath::{EuclideanSpace, Point2, vec2, Vector2};
+use cgmath::{Array, ElementWise, EuclideanSpace, Point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, waveform_mode};
 use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh};
+use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::cgmath_extensions::Decomposable;
 use crate::go;
 
@@ -25,11 +26,11 @@ impl BoardUi {
         let screen_size = vec2(screen_width as i32, screen_height as i32);
 
         let square_dimension = (min(screen_width, screen_height) as i32 - (minimum_border * 2) - line_width as i32) / (size - 1) as i32;
-        let square_size = vec2(square_dimension, square_dimension);
+        let square_size = Vector2::from_value(square_dimension);
         let stone_radius = ((square_dimension - stone_gap) / 2) as u32;
 
         let board_dimension = square_dimension * (size as i32 - 1) + line_width as i32;
-        let board_size = vec2(board_dimension, board_dimension);
+        let board_size = Vector2::from_value(board_dimension);
         let board_start = Point2::from_vec((screen_size - board_size) / 2);
 
         BoardUi {
@@ -42,7 +43,23 @@ impl BoardUi {
         }
     }
 
-    pub fn draw_board(self: &BoardUi, state: &go::BoardState, ctx: &mut ApplicationContext) {
+    pub fn handle_event(self: &BoardUi, event: MultitouchEvent, ctx: &mut ApplicationContext, state: &mut go::BoardState) {
+        // TODO show a ghost square on press/move, and play on release
+        if let MultitouchEvent::Press { finger } = event
+        {
+            let board_position = Point2::from_vec(finger.pos.cast().unwrap() - self.board_start);
+            let point = Point2::from_vec((board_position + (self.square_size / 2)).to_vec().div_element_wise(self.square_size));
+
+            eprintln!("Point: {:?}", point);
+
+            if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
+                state.play(point.cast().unwrap());
+                self.draw_board(state, ctx, false);
+            }
+        }
+    }
+
+    pub fn draw_board(self: &BoardUi, state: &go::BoardState, ctx: &mut ApplicationContext, full_refresh: bool) {
         let fb = ctx.get_framebuffer_ref();
 
         // Draw the board
@@ -83,25 +100,35 @@ impl BoardUi {
         }
 
         // Draw the last move
-        if let Some((x, y)) = state.last_move {
-            let position = self.board_start + (self.square_size.x_component() * x as i32) + (self.square_size.y_component() * y as i32);
-            fb.draw_circle(position, self.stone_radius / 2, color::BLACK);
+        if let Some(point) = state.last_move {
+            let position = self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32);
+            fb.draw_circle(position, self.stone_radius / 2, color::GRAY(128));
         }
 
         // Draw ko
-        if let Some((x, y)) = state.ko {
-            let center = self.board_start + (self.square_size.x_component() * x as i32) + (self.square_size.y_component() * y as i32);
+        if let Some(point) = state.ko {
+            let center = self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32);
             let size = vec2(self.stone_radius as i32, self.stone_radius as i32);
             fb.draw_rect(center - size / 2, size.cast().unwrap(), self.line_width, color::BLACK);
         }
 
-        fb.full_refresh(
-            waveform_mode::WAVEFORM_MODE_GC16,
-            display_temp::TEMP_USE_MAX,
-            dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-            DRAWING_QUANT_BIT,
-            true
-        );
+        if full_refresh {
+            fb.full_refresh(
+                waveform_mode::WAVEFORM_MODE_GC16,
+                display_temp::TEMP_USE_MAX,
+                dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+                DRAWING_QUANT_BIT,
+                true
+            );
+        } else {
+            fb.full_refresh(
+                waveform_mode::WAVEFORM_MODE_DU,
+                display_temp::TEMP_USE_REMARKABLE_DRAW,
+                dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+                DRAWING_QUANT_BIT,
+                true
+            );
+        }
 
         eprintln!("Refreshed!");
     }

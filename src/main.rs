@@ -35,14 +35,16 @@ fn main() {
     state.board[3][4] = Option::from(go::Player::Black);
     state.board[9][9] = Option::from(go::Player::White);
     state.board[12][9] = Option::from(go::Player::White);
-    state.last_move = Option::from((9, 9));
-    state.ko = Option::from((4, 9));
+    state.last_move = Option::from(point2(9, 9));
+    state.ko = Option::from(point2(4, 9));
 
-    board_ui.draw_board(&state, &mut app);
+    board_ui.draw_board(&state, &mut app, true);
 
-    app.start_event_loop(false, true, false, &handle_event);
-}
+    app.start_event_loop(false, true, false, |ctx: &mut ApplicationContext, event: InputEvent| {
+        eprintln!("Event: {:?}", event);
 
-fn handle_event(ctx: &mut ApplicationContext, event: InputEvent) {
-    eprintln!("Event: {:?}", event);
+        if let InputEvent::MultitouchEvent { event, .. } = event {
+            board_ui.handle_event(event, ctx, &mut state);
+        }
+    });
 }
