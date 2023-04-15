@@ -1,11 +1,11 @@
 use std::cmp::min;
 use cgmath::{Array, ElementWise, EuclideanSpace, Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, waveform_mode};
-use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh};
+use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
+use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::cgmath_extensions::Decomposable;
-use crate::go;
+use crate::{event_loop, go};
 
 pub struct BoardUi {
     size: usize,
@@ -55,7 +55,7 @@ impl BoardUi {
 
             if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
                 state.play(point.cast().unwrap());
-                self.draw_board(state, ctx, false);
+                event_loop::post_redraw();
             }
         }
     }
@@ -64,7 +64,9 @@ impl BoardUi {
         self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32)
     }
 
-    pub fn draw_board(self: &BoardUi, state: &go::BoardState, ctx: &mut ApplicationContext, full_refresh: bool) {
+    pub fn draw(self: &BoardUi, state: &go::BoardState, ctx: &mut ApplicationContext) {
+        // TODO when a piece is played, only redraw the parts which changed. Could be more responsive?
+
         let fb = ctx.get_framebuffer_ref();
 
         // Board background
@@ -136,22 +138,21 @@ impl BoardUi {
             fb.draw_rect(center - size / 2, size.cast().unwrap(), self.line_width / 2, color::BLACK);
         }
 
-        if full_refresh {
-            fb.full_refresh(
-                waveform_mode::WAVEFORM_MODE_GC16,
-                display_temp::TEMP_USE_MAX,
-                dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
-                DRAWING_QUANT_BIT,
-                true
-            );
-        } else {
-            fb.full_refresh(
-                waveform_mode::WAVEFORM_MODE_DU,
-                display_temp::TEMP_USE_REMARKABLE_DRAW,
-                dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                DRAWING_QUANT_BIT,
-                true
-            );
-        }
+        let refresh_rect = mxcfb_rect {
+            top: (self.board_start.y - self.square_size.y) as u32,
+            left: (self.board_start.x - self.square_size.x) as u32,
+            width: (self.board_size.x + self.square_size.x * 2) as u32,
+            height: (self.board_size.y + self.square_size.y * 2) as u32,
+        };
+
+        fb.partial_refresh(
+            &refresh_rect,
+            PartialRefreshMode::Async,
+            waveform_mode::WAVEFORM_MODE_DU,
+            display_temp::TEMP_USE_REMARKABLE_DRAW,
+            dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+            DRAWING_QUANT_BIT,
+            false
+        );
     }
 }
