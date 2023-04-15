@@ -2,9 +2,10 @@ use std::string::String;
 use cgmath::{Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
-use libremarkable::framebuffer::{draw, FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
+use libremarkable::framebuffer::{draw, FramebufferDraw, FramebufferIO, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::{InputEvent, MultitouchEvent};
-use crate::{go, text};
+use crate::{drawing, go, text};
+use crate::cgmath_extensions::Decomposable;
 use crate::go::Player;
 
 pub struct PlayerUi {
@@ -45,12 +46,12 @@ impl PlayerUi {
     pub fn draw(self: &PlayerUi, state: &go::BoardState, ctx: &mut ApplicationContext) {
         let fb = ctx.get_framebuffer_ref();
 
-        let rect_color = match state.current_player == self.player {
-            true => color::GRAY(0x20),
-            false => color::WHITE,
-        };
-        eprintln!("Drawing player UI for player {:?} with color {:?}", self.player, rect_color);
-        fb.fill_rect(self.rect_start, self.rect_size, rect_color);
+        if state.current_player == self.player {
+            // Use a dithered rectangle so that the update can be drawn using the direct update waveform
+            drawing::dithered_fill_rect(fb, self.rect_start, self.rect_size, 8, 3);
+        } else {
+            fb.fill_rect(self.rect_start, self.rect_size, color::WHITE);
+        }
 
         text::draw_text(
             fb,
@@ -70,7 +71,28 @@ impl PlayerUi {
         fb.partial_refresh(
             &refresh_rect,
             PartialRefreshMode::Async,
-            waveform_mode::WAVEFORM_MODE_GLR16,
+            waveform_mode::WAVEFORM_MODE_DU,
+            display_temp::TEMP_USE_PAPYRUS,
+            dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+            DRAWING_QUANT_BIT,
+            false
+        );
+    }
+
+    pub fn cleanup(self: &PlayerUi, state: &go::BoardState, ctx: &mut ApplicationContext) {
+        let fb = ctx.get_framebuffer_ref();
+
+        let refresh_rect = mxcfb_rect {
+            top: self.rect_start.y as u32,
+            left: self.rect_start.x as u32,
+            width: self.rect_size.x as u32,
+            height: self.rect_size.y as u32,
+        };
+
+        fb.partial_refresh(
+            &refresh_rect,
+            PartialRefreshMode::Async,
+            waveform_mode::WAVEFORM_MODE_REAGL,
             display_temp::TEMP_USE_PAPYRUS,
             dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
             DRAWING_QUANT_BIT,

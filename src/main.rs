@@ -13,6 +13,7 @@ mod board_ui;
 mod player_ui;
 mod text;
 mod event_loop;
+mod drawing;
 
 fn main() {
     let mut app = ApplicationContext::default();
@@ -46,6 +47,9 @@ fn main() {
             board_ui.draw(&state, ctx);
             white_ui.draw(&state, ctx);
             black_ui.draw(&state, ctx);
+
+            white_ui.cleanup(&state, ctx);
+            black_ui.cleanup(&state, ctx);
         }
     });
 }

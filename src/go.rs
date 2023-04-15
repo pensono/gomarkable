@@ -24,6 +24,9 @@ pub struct BoardState {
     pub board: Vec<Vec<Option<Player>>>,
     pub last_move: Option<Point2<usize>>,
     pub ko: Option<Point2<usize>>,
+
+    pub captured_black: u32,
+    pub captured_white: u32,
 }
 
 impl BoardState {
@@ -43,6 +46,8 @@ impl BoardState {
             board,
             last_move: None,
             ko: None,
+            captured_black: 0,
+            captured_white: 0,
         }
     }
 
