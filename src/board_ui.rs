@@ -54,7 +54,7 @@ impl BoardUi {
             let point = Point2::from_vec((board_position + (self.square_size / 2)).to_vec().div_element_wise(self.square_size));
 
             if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
-                let legal_move = state.try_play(point.cast().unwrap());
+                let legal_move = state.try_play(point.cast().unwrap()).is_ok();
 
                 if legal_move {
                     event_loop::post_redraw();

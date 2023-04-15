@@ -16,23 +16,29 @@ pub static UI_FONT: Lazy<Font<'static>> = Lazy::new(|| {
         .expect("corrupted font data")
 });
 
+pub enum TextAlignment {
+    Left,
+    Centered,
+    Right,
+}
+
 pub fn draw_text(
     fb: &mut dyn framebuffer::FramebufferIO,
     pos: Point2<i32>,
+    alignment: TextAlignment,
     text_size: i32,
     text: &str,
     col: color,
 ) {
+    let scale = scale_for_size(text_size);
 
-    let scale_value = text_size as f32 * 2f32;
-
-    let scale = Scale {
-        x: scale_value,
-        y: scale_value,
+    let alignment_offset = match alignment {
+        TextAlignment::Left => 0f32,
+        TextAlignment::Centered => text_width(text_size, text) as f32 / 2f32,
+        TextAlignment::Right => text_width(text_size, text) as f32,
     };
 
-    // The starting positioning of the glyphs (left middle)
-    let start = point(pos.x as f32, pos.y as f32 + (scale_value / 2f32));
+    let start = point(pos.x as f32 - alignment_offset, pos.y as f32 + text_size as f32);
 
     let components = col.to_rgb8();
     let c1 = f32::from(255 - components[0]);
@@ -45,7 +51,6 @@ pub fn draw_text(
             // Draw the glyph into the image per-pixel by using the draw closure
             glyph.draw(|x, y, v| {
                 let mult = (1.0 - v).min(1.0);
-                let text_color = color::RGB((c1 * mult) as u8, (c2 * mult) as u8, (c3 * mult) as u8);
                 let screen_position = Point2 {
                     x: (x + bounding_box.min.x as u32) as u32,
                     y: (y + bounding_box.min.y as u32) as u32,
@@ -59,4 +64,26 @@ pub fn draw_text(
             });
         }
     }
+}
+
+pub fn text_width(text_size: i32, text: &str) -> i32 {
+    if text.len() == 0 {
+        return 0;
+    }
+
+    let scale = scale_for_size(text_size);
+    let last_glyph = UI_FONT.layout(text, scale, point(0.0, 0.0)).last().unwrap();
+
+    return last_glyph.pixel_bounding_box().unwrap().max.x;
+}
+
+
+fn scale_for_size(text_size: i32) -> Scale {
+    // 2 is a magic value for noto UI? unsure what's going on but it works
+    let scale_value = text_size as f32 * 2f32;
+
+    return Scale {
+        x: scale_value,
+        y: scale_value,
+    };
 }

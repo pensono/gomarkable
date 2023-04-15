@@ -1,3 +1,4 @@
+use std::fmt::format;
 use std::string::String;
 use cgmath::{Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
@@ -12,6 +13,7 @@ pub struct PlayerUi {
     player: Player,
     player_name: String,
     name_position: Point2<i32>,
+    captures_position: Point2<i32>,
     text_size: i32,
     rect_start: Point2<i32>,
     rect_size: Vector2<u32>,
@@ -31,12 +33,15 @@ impl PlayerUi {
             rect_start.y += screen_height as i32 - height as i32
         }
 
-        let mut name_position = rect_start + vec2(padding + height as i32, (height as i32 - text_size as i32) / 2);
+        let text_topline = (height as i32 - text_size as i32) / 2;
+        let name_position = rect_start + vec2(padding + height as i32, text_topline);
+        let captures_position = rect_start + vec2(screen_width as i32 - padding - height as i32, text_topline);
 
         PlayerUi {
             player,
             player_name: String::from(player_name),
             name_position,
+            captures_position,
             text_size,
             rect_start,
             rect_size,
@@ -56,8 +61,23 @@ impl PlayerUi {
         text::draw_text(
             fb,
             self.name_position,
+            text::TextAlignment::Left,
             self.text_size,
             self.player_name.as_str(),
+            color::BLACK,
+        );
+
+        let captures = state.captures_made_by(self.player);
+        let captures_string = match captures {
+            1 => format!("{} Capture", captures),
+            _ => format!("{} Captures", captures)
+        };
+        text::draw_text(
+            fb,
+            self.captures_position,
+            text::TextAlignment::Right,
+            self.text_size,
+            captures_string.as_str(),
             color::BLACK,
         );
 

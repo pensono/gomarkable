@@ -1,12 +1,4 @@
-use std::fs::File;
-use std::io::Read;
 use std::sync::atomic::AtomicBool;
-use cgmath::num_traits::real::Real;
-use cgmath::Point2;
-use libremarkable::framebuffer::common::color;
-use libremarkable::framebuffer;
-use rusttype::{point, Font, Scale};
-use once_cell::sync::Lazy;
 
 static NEEDS_REDRAW: AtomicBool = AtomicBool::new(false);
 

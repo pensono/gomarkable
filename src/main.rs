@@ -19,9 +19,9 @@ fn main() {
     let mut app = ApplicationContext::default();
     app.clear(true);
 
-    let mut board_ui = board_ui::BoardUi::new(19, &app);
-    let mut white_ui = player_ui::PlayerUi::new("White", true, Player::White, &app);
-    let mut black_ui = player_ui::PlayerUi::new("Black", false, Player::Black, &app);
+    let board_ui = board_ui::BoardUi::new(19, &app);
+    let white_ui = player_ui::PlayerUi::new("White", true, Player::White, &app);
+    let black_ui = player_ui::PlayerUi::new("Black", false, Player::Black, &app);
     let mut state = go::BoardState::new(19);
 
     board_ui.draw(&state, &mut app);

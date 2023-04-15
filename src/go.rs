@@ -50,19 +50,27 @@ impl BoardState {
             ko: None,
             captured_black: 0,
             captured_white: 0,
+            komi_minus_half: 6,
         }
     }
 
-    pub fn try_play(self: &mut BoardState, point: Point2<usize>) -> bool {
+    pub fn captures_made_by(&self, player: Player) -> u32 {
+        match player {
+            Player::Black => self.captured_black,
+            Player::White => self.captured_white,
+        }
+    }
+
+    pub fn try_play(self: &mut BoardState, point: Point2<usize>) -> Result<(), &str> {
         // Can't play where a piece already is
         if self.board[point.x][point.y].is_some() {
-            return false;
+            return Err("Can't play where a piece already is");
         }
 
         // Ko rule
         if let Some(ko) = self.ko {
             if point == ko {
-                return false;
+                return Err("Can't play in the ko");
             }
         }
 
@@ -94,13 +102,13 @@ impl BoardState {
         let liberties = self.get_liberties(&played_line);
         if liberties.len() == 0 {
             self.board[point.x][point.y] = None;
-            return false;
+            return Err("Self capture");
         }
 
         self.current_player = other_player(self.current_player);
         self.last_move = Some(point);
 
-        return true;
+        return Ok(());
     }
 
     pub fn get_line(self: &mut BoardState, point: &Point2<usize>) -> Vec<Point2<usize>> {
