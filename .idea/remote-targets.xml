@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <targets>
+      <target name="WSL - Ubuntu" type="wsl" uuid="6f769417-fea3-4212-aa95-821b452861e9">
+        <config>
+          <option name="distributionMsId" value="Ubuntu" />
+          <option name="projectRootOnTarget" value="/mnt/f/Programs/JetBrains/apps/IDEA-U/ch-0/231.8109.175/jbr/bin&#10;/gomarkable" />
+        </config>
+        <ContributedStateBase type="RsLanguageRuntime">
+          <config>
+            <option name="cargoPath" value="/home/ethan/.cargo/bin/cargo" />
+            <option name="cargoVersion" value="1.68.2 (6feb7c9cf 2023-03-26)" />
+            <option name="rustcPath" value="/home/ethan/.cargo/bin/rustc" />
+            <option name="rustcVersion" value="1.68.2 (9eb3afe9e 2023-03-27)" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>

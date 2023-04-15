@@ -54,8 +54,11 @@ impl BoardUi {
             let point = Point2::from_vec((board_position + (self.square_size / 2)).to_vec().div_element_wise(self.square_size));
 
             if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
-                state.play(point.cast().unwrap());
-                event_loop::post_redraw();
+                let legal_move = state.try_play(point.cast().unwrap());
+
+                if legal_move {
+                    event_loop::post_redraw();
+                }
             }
         }
     }
@@ -69,13 +72,12 @@ impl BoardUi {
 
         let fb = ctx.get_framebuffer_ref();
 
-        // Board background
-        // Not sure if I like it yet
-        // fb.fill_rect(
-        //     self.board_start - self.square_size,
-        //     (self.board_size + self.square_size * 2).cast().unwrap(),
-        //     color::GRAY(0x1a),
-        // );
+        // Board background. This is important for if any pieces are removed since we never fully clear the screen
+        fb.fill_rect(
+            self.board_start - self.square_size,
+            (self.board_size + self.square_size * 2).cast().unwrap(),
+            color::WHITE
+        );
 
         // Draw the board outline
         fb.draw_rect(

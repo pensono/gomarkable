@@ -1,4 +1,5 @@
-use cgmath::Point2;
+use std::collections::HashSet;
+use cgmath::{Point2, point2};
 
 // An enum for each player
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -27,6 +28,7 @@ pub struct BoardState {
 
     pub captured_black: u32,
     pub captured_white: u32,
+    pub komi_minus_half: u32,
 }
 
 impl BoardState {
@@ -51,10 +53,154 @@ impl BoardState {
         }
     }
 
-    pub fn play(self: &mut BoardState, point: Point2<usize>) {
-        // Don't implement any fancy logic yet
+    pub fn try_play(self: &mut BoardState, point: Point2<usize>) -> bool {
+        // Can't play where a piece already is
+        if self.board[point.x][point.y].is_some() {
+            return false;
+        }
+
+        // Ko rule
+        if let Some(ko) = self.ko {
+            if point == ko {
+                return false;
+            }
+        }
+
         self.board[point.x][point.y] = Some(self.current_player);
+
+        // Capture other pieces
+        for neighbor in self.get_neighbours(&point) {
+            if self.board[neighbor.x][neighbor.y] != Some(other_player(self.current_player)) {
+                continue;
+            }
+
+            let line = self.get_line(&neighbor);
+            let liberties = self.get_liberties(&line);
+            if liberties.len() == 0 {
+                for point in line {
+                    self.board[point.x][point.y] = None;
+                    if self.current_player == Player::Black {
+                        self.captured_black += 1;
+                    } else {
+                        self.captured_white += 1;
+                    }
+                }
+            }
+        }
+
+        // If the current player does not have any liberties, return false
+        // Note that this will never be true if any pieces were just captured
+        let played_line = self.get_line(&point);
+        let liberties = self.get_liberties(&played_line);
+        if liberties.len() == 0 {
+            self.board[point.x][point.y] = None;
+            return false;
+        }
+
         self.current_player = other_player(self.current_player);
         self.last_move = Some(point);
+
+        return true;
+    }
+
+    pub fn get_line(self: &mut BoardState, point: &Point2<usize>) -> Vec<Point2<usize>> {
+        let mut color = self.board[point.x][point.y];
+        if color == None {
+            return vec![];
+        }
+
+        let mut to_visit = vec![];
+        let mut visited = HashSet::new();
+        let mut line = vec![];
+
+        to_visit.push(point.clone());
+
+        while to_visit.len() > 0 {
+            let current = to_visit.pop().unwrap();
+            visited.insert(current);
+
+            if !(self.board[current.x][current.y] == color) {
+                continue;
+            }
+
+            line.push(current);
+            let neighbors = self.get_neighbours(&current);
+            for neighbor in neighbors {
+                if !visited.contains(&neighbor) {
+                    to_visit.push(neighbor.clone());
+                }
+            }
+        }
+
+        return line;
+    }
+
+    pub fn get_liberties(self: &mut BoardState, line: &Vec<Point2<usize>>) -> Vec<Point2<usize>> {
+        let mut liberties = HashSet::new();
+
+        for point in line {
+            let neighbors = self.get_neighbours(&point);
+            for neighbor in neighbors {
+                if self.board[neighbor.x][neighbor.y].is_none() {
+                    liberties.insert(neighbor);
+                }
+            }
+        }
+
+        return liberties.into_iter().collect();
+    }
+
+    pub fn get_neighbours(self: &mut BoardState, point: &Point2<usize>) -> Vec<Point2<usize>> {
+        let mut neighbours = vec![];
+
+        if point.x > 0 {
+            neighbours.push(point2(point.x - 1, point.y));
+        }
+        if point.x < self.size - 1 {
+            neighbours.push(point2(point.x + 1, point.y));
+        }
+        if point.y > 0 {
+            neighbours.push(point2(point.x, point.y - 1));
+        }
+        if point.y < self.size - 1 {
+            neighbours.push(point2(point.x, point.y + 1));
+        }
+
+        return neighbours;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use cgmath::point2;
+
+    #[test]
+    fn onlyPlayEachOnce() {
+        let mut state = super::BoardState::new(19);
+        assert_eq!(state.try_play(point2(10, 10)), true);
+        assert_eq!(state.try_play(point2(10, 10)), false);
+    }
+
+    #[test]
+    fn ko() {
+        let mut state = super::BoardState::new(19);
+        state.ko = Some(point2(10, 10));
+        assert_eq!(state.try_play(point2(10, 10)), false);
+    }
+
+    #[test]
+    fn capture() {
+        let mut state = super::BoardState::new(19);
+
+        state.board[9][10] = Some(super::Player::Black);
+        state.board[10][9] = Some(super::Player::Black);
+        state.board[11][10] = Some(super::Player::Black);
+        state.board[10][10] = Some(super::Player::White);
+
+        assert_eq!(state.try_play(point2(10, 11)), true);
+
+        assert_eq!(state.captured_white, 1);
+        assert_eq!(state.captured_black, 0);
+        assert_eq!(state..board[10][10], None);
     }
 }
