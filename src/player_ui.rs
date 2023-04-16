@@ -63,8 +63,7 @@ impl PlayerUi {
             self.name_position,
             text::TextAlignment::Left,
             self.text_size,
-            self.player_name.as_str(),
-            color::BLACK,
+            self.player_name.as_str()
         );
 
         let captures = state.captures_made_by(self.player);
@@ -82,8 +81,7 @@ impl PlayerUi {
             self.captures_position,
             text::TextAlignment::Right,
             self.text_size,
-            captures_string.as_str(),
-            color::BLACK,
+            captures_string.as_str()
         );
 
         let refresh_rect = mxcfb_rect {
