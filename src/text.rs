@@ -1,7 +1,6 @@
 use std::cmp::min;
 use std::fs::File;
 use std::io::Read;
-use cgmath::num_traits::real::Real;
 use cgmath::Point2;
 use libremarkable::framebuffer::common::color;
 use libremarkable::framebuffer;

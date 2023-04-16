@@ -1,6 +1,4 @@
 use std::cmp::min;
-use std::fs::File;
-use std::io::Read;
 use cgmath::{Point2, vec2, Vector2};
 use libremarkable::framebuffer::common::color;
 use libremarkable::framebuffer;

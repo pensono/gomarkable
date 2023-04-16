@@ -6,6 +6,8 @@ use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRef
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::cgmath_extensions::Decomposable;
 use crate::{event_loop, go};
+use crate::go::BoardState;
+use crate::ui::UiComponent;
 
 pub struct BoardUi {
     size: usize,
@@ -17,8 +19,9 @@ pub struct BoardUi {
     stone_radius: u32,
 }
 
+
 impl BoardUi {
-    pub fn new(size: usize, ctx: &ApplicationContext) -> BoardUi {
+    pub fn new(ctx: &ApplicationContext, size: usize) -> BoardUi {
         let minimum_border = 100i32;
         let line_width = 3u32;
         let stone_gap = 2i32;
@@ -46,28 +49,32 @@ impl BoardUi {
         }
     }
 
-    pub fn handle_event(self: &BoardUi, event: MultitouchEvent, ctx: &mut ApplicationContext, state: &mut go::BoardState) {
-        // TODO show a ghost square on press/move, and play on release
-        if let MultitouchEvent::Press { finger } = event
-        {
-            let board_position = Point2::from_vec(finger.pos.cast().unwrap() - self.board_start);
-            let point = Point2::from_vec((board_position + (self.square_size / 2)).to_vec().div_element_wise(self.square_size));
+    fn board_to_screen(self: &BoardUi, point: Point2<usize>) -> Point2<i32> {
+        self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32)
+    }
+}
 
-            if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
-                let legal_move = state.try_play(point.cast().unwrap()).is_ok();
+impl UiComponent<BoardState> for BoardUi {
+    fn handle_event(self: &BoardUi, ctx: &mut ApplicationContext, state: &mut BoardState, event: &InputEvent) {
+        if let InputEvent::MultitouchEvent { event, .. } = event {
+            // TODO show a ghost square on press/move, and play on release
+            if let MultitouchEvent::Press { finger } = event
+            {
+                let board_position = Point2::from_vec(finger.pos.cast().unwrap() - self.board_start);
+                let point = Point2::from_vec((board_position + (self.square_size / 2)).to_vec().div_element_wise(self.square_size));
 
-                if legal_move {
-                    event_loop::post_redraw();
+                if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
+                    let legal_move = state.try_play(point.cast().unwrap()).is_ok();
+
+                    if legal_move {
+                        event_loop::post_redraw();
+                    }
                 }
             }
         }
     }
 
-    fn board_to_screen(self: &BoardUi, point: Point2<usize>) -> Point2<i32> {
-        self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32)
-    }
-
-    pub fn draw(self: &BoardUi, state: &go::BoardState, ctx: &mut ApplicationContext) {
+    fn draw(self: &BoardUi, ctx: &mut ApplicationContext, state: &go::BoardState) {
         // TODO when a piece is played, only redraw the parts which changed. Could be more responsive?
 
         let fb = ctx.get_framebuffer_ref();

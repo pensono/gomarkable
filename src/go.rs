@@ -112,7 +112,7 @@ impl BoardState {
     }
 
     pub fn get_line(self: &mut BoardState, point: &Point2<usize>) -> Vec<Point2<usize>> {
-        let mut color = self.board[point.x][point.y];
+        let color = self.board[point.x][point.y];
         if color == None {
             return vec![];
         }
