@@ -1,13 +1,11 @@
 use cgmath::{Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
-use libremarkable::framebuffer::{draw, FramebufferDraw, FramebufferIO, FramebufferRefresh, PartialRefreshMode};
+use libremarkable::framebuffer::common::{display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
+use libremarkable::framebuffer::{FramebufferRefresh, PartialRefreshMode};
 use libremarkable::image;
 use libremarkable::image::RgbImage;
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::{drawing, go, text};
-use crate::cgmath_extensions::Decomposable;
-use crate::go::{BoardState, Player};
 use crate::ui::UiComponent;
 
 pub struct QuitUi {

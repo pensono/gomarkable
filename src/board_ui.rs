@@ -19,10 +19,34 @@ pub struct BoardUi {
     stone_radius: u32,
 }
 
+fn hoshi_points(size: usize) -> Vec<Point2<usize>> {
+    match size {
+        19 => vec![
+            point2(3, 3),point2(9, 3),point2(15, 3),
+            point2(3, 9),point2(9, 9),point2(15, 9),
+            point2(3, 15),point2(9, 15),point2(15, 15),
+        ],
+        13 => vec![
+            point2(3, 3),point2(10, 3),
+            point2(6, 6),
+            point2(3, 10),point2(10, 10),
+        ],
+        9 => vec![
+            point2(2, 2), point2(6, 2),
+            point2(4, 4),
+            point2(2, 6), point2(6, 6),
+        ],
+        _ => vec![]
+    }
+}
 
 impl BoardUi {
     pub fn new(ctx: &ApplicationContext, size: usize) -> BoardUi {
-        let minimum_border = 100i32;
+        let minimum_border = match size {
+            size if size > 13 => 100i32,
+            _ => 150i32,
+        };
+
         let line_width = 3u32;
         let stone_gap = 2i32;
         let star_radius = 8u32;
@@ -105,11 +129,8 @@ impl UiComponent<BoardState> for BoardUi {
         }
 
         // Draw star points
-        // TODO Won't work for sizes other than 19x19 but that's fine for now
-        for x in [3, 9, 15] {
-            for y in [3, 9, 15] {
-                fb.fill_circle(self.board_to_screen(point2(x, y)), self.hoshi_radius, color::BLACK);
-            }
+        for point in hoshi_points(self.size) {
+            fb.fill_circle(self.board_to_screen(point), self.hoshi_radius, color::BLACK);
         }
 
         // Draw the stones
