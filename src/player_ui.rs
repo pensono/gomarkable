@@ -68,10 +68,15 @@ impl PlayerUi {
         );
 
         let captures = state.captures_made_by(self.player);
-        let captures_string = match captures {
+        let mut captures_string = match captures {
             1 => format!("{} Capture", captures),
             _ => format!("{} Captures", captures)
         };
+
+        if self.player == Player::White {
+            captures_string = format!("{}.5 Komi  {}", state.komi_minus_half, captures_string);
+        }
+
         text::draw_text(
             fb,
             self.captures_position,
