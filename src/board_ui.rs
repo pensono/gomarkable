@@ -5,7 +5,7 @@ use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWI
 use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::cgmath_extensions::Decomposable;
-use crate::{event_loop, go};
+use crate::{go, ui};
 use crate::game_controller::GameController;
 use crate::go::BoardState;
 use crate::ui::UiComponent;
@@ -92,7 +92,7 @@ impl UiComponent<Box<dyn GameController>> for BoardUi {
                     let legal_move = state.try_play(point.cast().unwrap()).is_ok();
 
                     if legal_move {
-                        event_loop::post_redraw();
+                        ui::post_redraw();
                     }
                 }
             }

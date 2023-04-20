@@ -2,7 +2,7 @@ use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{display_temp, dither_mode, DRAWING_QUANT_BIT, waveform_mode};
 use libremarkable::framebuffer::FramebufferRefresh;
 use libremarkable::input::InputEvent;
-use std::sync::atomic::AtomicBool;
+use crate::event_loop;
 
 pub struct Scene<State> {
     components: Vec<Box<dyn UiComponent<State>>>,
@@ -22,21 +22,33 @@ impl<State> Scene<State> {
         self.components.push(Box::new(component));
     }
 
-    pub fn draw(&self, ctx: &mut ApplicationContext) {
+    pub fn draw(&self, ctx: &mut ApplicationContext, state: &State) {
         for component in &self.components {
-            component.draw(ctx, &self.state);
+            component.draw(ctx, state);
         }
     }
 
-    pub fn handleEvent(&mut self, ctx: &mut ApplicationContext, event: InputEvent) {
-        for component in &self.components {
-            component.handle_event(ctx, &mut self.state, &event);
-        }
+    pub fn start(&mut self, ctx: &mut ApplicationContext) {
+        ctx.clear(true);
+        self.draw(ctx, &state);
+        ctx.get_framebuffer_ref().full_refresh(
+            waveform_mode::WAVEFORM_MODE_GC16,
+            display_temp::TEMP_USE_MAX,
+            dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+            DRAWING_QUANT_BIT,
+            true
+        );
 
-        while needs_redraw() {
-            reset_redraw();
-            self.draw(ctx);
-        }
+        ctx.start_event_loop(false, true, false, |ctx: &mut ApplicationContext, event: InputEvent| {
+            for component in &self.components {
+                component.handle_event(ctx, &mut self.state, &event);
+            }
+
+            while event_loop::needs_redraw() {
+                event_loop::reset_redraw();
+                self.draw(ctx, &state);
+            }
+        });
     }
 }
 
@@ -44,19 +56,3 @@ pub trait UiComponent<State> {
     fn handle_event(&self, ctx: &mut ApplicationContext, state: &mut State, event: &InputEvent) {}
     fn draw(&self, ctx: &mut ApplicationContext, state: &State);
 }
-
-
-static NEEDS_REDRAW: AtomicBool = AtomicBool::new(false);
-
-pub fn post_redraw() {
-    NEEDS_REDRAW.store(true, std::sync::atomic::Ordering::SeqCst);
-}
-
-pub fn needs_redraw() -> bool {
-    return NEEDS_REDRAW.load(std::sync::atomic::Ordering::SeqCst);
-}
-
-pub fn reset_redraw() {
-    NEEDS_REDRAW.store(false, std::sync::atomic::Ordering::SeqCst);
-}
-
