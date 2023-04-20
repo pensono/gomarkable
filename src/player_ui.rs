@@ -7,6 +7,7 @@ use libremarkable::framebuffer::{draw, FramebufferDraw, FramebufferIO, Framebuff
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::{drawing, go, text};
 use crate::cgmath_extensions::Decomposable;
+use crate::game_controller::GameController;
 use crate::go::Player;
 use crate::ui::UiComponent;
 
@@ -50,11 +51,12 @@ impl PlayerUi {
     }
 }
 
-impl UiComponent<go::BoardState> for PlayerUi {
-    fn draw(self: &PlayerUi, ctx: &mut ApplicationContext, state: &go::BoardState) {
+impl UiComponent<Box<dyn GameController>> for PlayerUi {
+    fn draw(self: &PlayerUi, ctx: &mut ApplicationContext, state: &Box<dyn GameController>) {
         let fb = ctx.get_framebuffer_ref();
+        let game_state = state.current_game_state();
 
-        if state.current_player == self.player {
+        if game_state.current_player == self.player {
             // Use a dithered rectangle so that the update can be drawn using the direct update waveform
             drawing::dithered_fill_rect(fb, self.rect_start, self.rect_size, 8, 3);
         } else {
@@ -69,14 +71,14 @@ impl UiComponent<go::BoardState> for PlayerUi {
             self.player_name.as_str()
         );
 
-        let captures = state.captures_made_by(self.player);
+        let captures = game_state.captures_made_by(self.player);
         let mut captures_string = match captures {
             1 => format!("{} Capture", captures),
             _ => format!("{} Captures", captures)
         };
 
         if self.player == Player::White {
-            captures_string = format!("{}.5 Komi  {}", state.komi_minus_half, captures_string);
+            captures_string = format!("{}.5 Komi  {}", game_state.komi_minus_half, captures_string);
         }
 
         text::draw_text(

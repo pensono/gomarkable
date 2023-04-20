@@ -2,7 +2,7 @@ use std::cmp::min;
 use cgmath::{Point2, vec2, Vector2};
 use libremarkable::framebuffer::common::color;
 use libremarkable::framebuffer;
-use libremarkable::image::{Pixel, RgbImage};
+use libremarkable::image::{RgbImage};
 
 pub fn dithered_fill_rect(fb: &mut dyn framebuffer::FramebufferIO, pos: Point2<i32>, size: Vector2<u32>, modulo: i32, offset: i32) {
     for ypos in pos.y..pos.y + size.y as i32 {

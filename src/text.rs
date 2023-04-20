@@ -1,5 +1,4 @@
-use std::cmp::min;
-use std::fs::File;
+ use std::fs::File;
 use std::io::Read;
 use cgmath::Point2;
 use libremarkable::framebuffer::common::color;

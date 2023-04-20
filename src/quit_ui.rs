@@ -5,7 +5,7 @@ use libremarkable::framebuffer::{FramebufferRefresh, PartialRefreshMode};
 use libremarkable::image;
 use libremarkable::image::RgbImage;
 use libremarkable::input::{InputEvent, MultitouchEvent};
-use crate::{drawing, go, text};
+use crate::{drawing};
 use crate::ui::UiComponent;
 
 pub struct QuitUi {

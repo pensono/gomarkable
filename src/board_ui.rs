@@ -6,6 +6,7 @@ use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRef
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::cgmath_extensions::Decomposable;
 use crate::{event_loop, go};
+use crate::game_controller::GameController;
 use crate::go::BoardState;
 use crate::ui::UiComponent;
 
@@ -78,8 +79,8 @@ impl BoardUi {
     }
 }
 
-impl UiComponent<BoardState> for BoardUi {
-    fn handle_event(self: &BoardUi, ctx: &mut ApplicationContext, state: &mut BoardState, event: &InputEvent) {
+impl UiComponent<Box<dyn GameController>> for BoardUi {
+    fn handle_event(self: &BoardUi, ctx: &mut ApplicationContext, state: &mut Box<dyn GameController>, event: &InputEvent) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             // TODO show a ghost square on press/move, and play on release
             if let MultitouchEvent::Press { finger } = event
@@ -98,10 +99,11 @@ impl UiComponent<BoardState> for BoardUi {
         }
     }
 
-    fn draw(self: &BoardUi, ctx: &mut ApplicationContext, state: &go::BoardState) {
+    fn draw(self: &BoardUi, ctx: &mut ApplicationContext, state: &Box<dyn GameController>) {
         // TODO when a piece is played, only redraw the parts which changed. Could be more responsive?
 
         let fb = ctx.get_framebuffer_ref();
+        let board = state.current_game_state();
 
         // Board background. This is important for if any pieces are removed since we never fully clear the screen
         fb.fill_rect(
@@ -138,7 +140,7 @@ impl UiComponent<BoardState> for BoardUi {
             for y in 0..self.size {
                 let position = self.board_to_screen(point2(x, y));
                 // TODO Both of these need aliasing!
-                match state.board[x][y] {
+                match board.board[x][y] {
                     Some(go::Player::Black) => {
                         fb.fill_circle(position.into(), self.stone_radius, color::BLACK);
                     }
@@ -153,8 +155,8 @@ impl UiComponent<BoardState> for BoardUi {
         }
 
         // Draw the last move
-        if let Some(point) = state.last_move {
-            let color = match state.current_player {
+        if let Some(point) = board.last_move {
+            let color = match board.current_player {
                 go::Player::Black => color::WHITE,
                 go::Player::White => color::BLACK,
             };
@@ -162,7 +164,7 @@ impl UiComponent<BoardState> for BoardUi {
         }
 
         // Draw ko
-        if let Some(point) = state.ko {
+        if let Some(point) = board.ko {
             let center = self.board_to_screen(point);
             let size = vec2(self.stone_radius as i32, self.stone_radius as i32);
             fb.draw_rect(center - size / 2, size.cast().unwrap(), self.line_width / 2, color::BLACK);
