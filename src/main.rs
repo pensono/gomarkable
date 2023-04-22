@@ -36,7 +36,7 @@ fn main() {
     }));
     menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*2, "Clock", vec!["None", "Rapid", "Blitz"], |game_options: &mut GameOptions, value: &str| { }));
     menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*3, "Handicap", vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], |game_options: &mut GameOptions, value: &str| { }));
-    menu.add(option_ui::OptionUi::new(&ctx, 1640i32, "", vec!["Play"], |game_options: &mut GameOptions, value: &str| { }));
+    menu.add(option_ui::OptionUi::new(&ctx, 1400i32, "", vec!["Play"], |game_options: &mut GameOptions, value: &str| { }));
 
     let game_controller : Box<dyn GameController> = Box::new(two_player_controller::TwoPlayerController::new(BoardState::new(19)));
     let mut gameplay = ui::Scene::new(game_controller);

@@ -4,7 +4,7 @@ use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
 use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::{InputEvent, MultitouchEvent};
-use crate::{GameOptions, text, ui};
+use crate::{drawing, GameOptions, text, ui};
 use crate::text::TextAlignment;
 use crate::ui::UiComponent;
 
@@ -91,7 +91,7 @@ impl UiComponent<GameOptions> for OptionUi {
                 text::draw_text(fb, self.box_starts[i] + self.text_offset, TextAlignment::Centered, self.text_size, color::WHITE, &self.option_names[i]);
             } else {
                 fb.fill_rect(self.box_starts[i],  self.box_size, color::WHITE);
-                fb.draw_rect(self.box_starts[i],  self.box_size, 2, color::BLACK);
+                drawing::draw_rect(fb, self.box_starts[i],  self.box_size, 2);
                 text::draw_text(fb, self.box_starts[i] + self.text_offset, TextAlignment::Centered, self.text_size, color::BLACK, &self.option_names[i]);
             }
         }

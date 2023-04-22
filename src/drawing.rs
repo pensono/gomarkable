@@ -1,8 +1,9 @@
 use std::cmp::{max, min};
-use cgmath::{Point2, vec2, Vector2};
+use cgmath::{Array, Point2, point2, vec2, Vector2};
 use libremarkable::framebuffer::common::color;
 use libremarkable::framebuffer;
 use libremarkable::image::{RgbImage};
+use crate::cgmath_extensions::Decomposable;
 
 pub fn dithered_fill_rect(fb: &mut dyn framebuffer::FramebufferIO, pos: Point2<i32>, size: Vector2<u32>, modulo: i32, offset: i32) {
     for ypos in pos.y..pos.y + size.y as i32 {
@@ -20,6 +21,28 @@ pub fn dithered_fill_rect(fb: &mut dyn framebuffer::FramebufferIO, pos: Point2<i
                 color,
             );
         }
+    }
+}
+
+pub fn draw_rect(fb: &mut dyn framebuffer::FramebufferIO, pos: Point2<i32>, size: Vector2<u32>, width: u32) {
+    for line in 0..width as i32 {
+        draw_horizontal_line(fb, pos + vec2(0, line), size.x);
+        draw_horizontal_line(fb, pos - vec2(0, line) + size.y_component().cast().unwrap(), size.x);
+
+        draw_vertical_line(fb, pos + vec2(line, 0), size.y);
+        draw_vertical_line(fb, pos - vec2(line, 0) + size.x_component().cast().unwrap(), size.y);
+    }
+}
+
+pub fn draw_vertical_line(fb: &mut dyn framebuffer::FramebufferIO, start: Point2<i32>, length: u32) {
+    for ypos in start.y..start.y + length as i32 {
+        fb.write_pixel(point2(start.x, ypos), color::BLACK);
+    }
+}
+
+pub fn draw_horizontal_line(fb: &mut dyn framebuffer::FramebufferIO, start: Point2<i32>, length: u32) {
+    for xpos in start.x..start.x + length as i32 {
+        fb.write_pixel(point2(xpos, start.y), color::BLACK);
     }
 }
 
@@ -48,16 +71,4 @@ pub fn lightest(a: color, b: color) -> color {
     let a_rgb = a.to_rgb8();
     let b_rgb = b.to_rgb8();
     return color::RGB(max(a_rgb[0], b_rgb[0]), max(a_rgb[1], b_rgb[1]), max(a_rgb[2], b_rgb[2]));
-}
-
-#[inline]
-pub fn multiply_f32(a: color, b: f32) -> color {
-    let a_rgb = a.to_rgb8();
-    return color::RGB((a_rgb[0] as f32 * b) as u8, (a_rgb[1] as f32 * b) as u8, (a_rgb[2] as f32 * b) as u8);
-}
-
-#[inline]
-pub fn multiply_u8(a: color, b: u8) -> color {
-    let a_rgb = a.to_rgb8();
-    return color::RGB(a_rgb[0] * b / 255, a_rgb[1] * b / 255, a_rgb[2] * b / 255);
 }
