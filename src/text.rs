@@ -26,8 +26,13 @@ pub fn draw_text(
     pos: Point2<i32>,
     alignment: TextAlignment,
     text_size: i32,
+    color: color,
     text: &str,
 ) {
+    if color != color::BLACK && color != color::WHITE {
+        panic!("Only black and white text is supported");
+    }
+
     let scale = scale_for_size(text_size);
 
     let alignment_offset = match alignment {
@@ -48,9 +53,15 @@ pub fn draw_text(
                     y: (y + bounding_box.min.y as u32) as u32,
                 };
 
-                let text_color = color::GRAY((255.0 * v) as u8);
                 let existing_color = fb.read_pixel(screen_position);
-                let draw_color = drawing::darkest(existing_color, text_color);
+
+                let draw_color = if color == color::BLACK {
+                    let text_color = color::GRAY((255.0 * v) as u8);
+                    drawing::darkest(existing_color, text_color)
+                } else {
+                    let text_color = color::GRAY((255.0 * (1.0 - v)) as u8);
+                    drawing::lightest(existing_color, text_color)
+                };
 
                 fb.write_pixel(screen_position.cast().unwrap(), draw_color);
             });

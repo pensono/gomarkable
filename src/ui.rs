@@ -1,6 +1,4 @@
 use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{display_temp, dither_mode, DRAWING_QUANT_BIT, waveform_mode};
-use libremarkable::framebuffer::FramebufferRefresh;
 use libremarkable::input::InputEvent;
 use std::sync::atomic::AtomicBool;
 
@@ -28,8 +26,8 @@ impl<State> Scene<State> {
         }
     }
 
-    pub fn handleEvent(&mut self, ctx: &mut ApplicationContext, event: InputEvent) {
-        for component in &self.components {
+    pub fn handle_event(&mut self, ctx: &mut ApplicationContext, event: InputEvent) {
+        for component in self.components.iter_mut() {
             component.handle_event(ctx, &mut self.state, &event);
         }
 
@@ -41,7 +39,7 @@ impl<State> Scene<State> {
 }
 
 pub trait UiComponent<State> {
-    fn handle_event(&self, ctx: &mut ApplicationContext, state: &mut State, event: &InputEvent) {}
+    fn handle_event(&mut self, ctx: &mut ApplicationContext, state: &mut State, event: &InputEvent) {}
     fn draw(&self, ctx: &mut ApplicationContext, state: &State);
 }
 

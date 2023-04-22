@@ -28,7 +28,7 @@ impl QuitUi {
 }
 
 impl<State> UiComponent<State> for QuitUi {
-    fn handle_event(self: &QuitUi, ctx: &mut ApplicationContext, _: &mut State, event: &InputEvent) {
+    fn handle_event(self: &mut QuitUi, ctx: &mut ApplicationContext, _: &mut State, event: &InputEvent) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             if let MultitouchEvent::Release { finger } = event
             {

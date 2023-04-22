@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::cmp::{max, min};
 use cgmath::{Point2, vec2, Vector2};
 use libremarkable::framebuffer::common::color;
 use libremarkable::framebuffer;
@@ -41,6 +41,13 @@ pub fn darkest(a: color, b: color) -> color {
     let a_rgb = a.to_rgb8();
     let b_rgb = b.to_rgb8();
     return color::RGB(min(a_rgb[0], b_rgb[0]), min(a_rgb[1], b_rgb[1]), min(a_rgb[2], b_rgb[2]));
+}
+
+#[inline]
+pub fn lightest(a: color, b: color) -> color {
+    let a_rgb = a.to_rgb8();
+    let b_rgb = b.to_rgb8();
+    return color::RGB(max(a_rgb[0], b_rgb[0]), max(a_rgb[1], b_rgb[1]), max(a_rgb[2], b_rgb[2]));
 }
 
 #[inline]

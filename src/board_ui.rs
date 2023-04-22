@@ -80,7 +80,7 @@ impl BoardUi {
 }
 
 impl UiComponent<Box<dyn GameController>> for BoardUi {
-    fn handle_event(self: &BoardUi, ctx: &mut ApplicationContext, state: &mut Box<dyn GameController>, event: &InputEvent) {
+    fn handle_event(self: &mut BoardUi, ctx: &mut ApplicationContext, state: &mut Box<dyn GameController>, event: &InputEvent) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             // TODO show a ghost square on press/move, and play on release
             if let MultitouchEvent::Press { finger } = event

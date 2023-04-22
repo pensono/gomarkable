@@ -68,6 +68,7 @@ impl UiComponent<Box<dyn GameController>> for PlayerUi {
             self.name_position,
             text::TextAlignment::Left,
             self.text_size,
+            color::BLACK,
             self.player_name.as_str()
         );
 
@@ -86,6 +87,7 @@ impl UiComponent<Box<dyn GameController>> for PlayerUi {
             self.captures_position,
             text::TextAlignment::Right,
             self.text_size,
+            color::BLACK,
             captures_string.as_str()
         );
 
