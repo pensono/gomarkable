@@ -93,7 +93,7 @@ impl<State> SceneTrait for Scene<State> {
     }
 }
 
-pub trait UiComponent<State> {
+pub trait UiComponent<State: ?Sized> {
     fn handle_event(&mut self, ui: Rc<RefCell<&mut UiController>>, state: &mut State, event: &InputEvent) {}
     fn draw(&self, ui: Rc<RefCell<&mut UiController>>, state: &State);
 }

@@ -29,8 +29,8 @@ fn main() {
         clock: 0,
     };
     let mut menu = ui::Scene::new(game_options);
-    menu.add(option_ui::OptionUi::new(&ctx, 400i32, "", vec!["1-Player", "2-Player", "OGS"], |ui: &mut UiController, game_options: &mut GameOptions, value: &str| {}));
-    menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*1, "Board Size" , vec!["9x9", "13x13", "19x19"], |ui: &mut UiController, game_options: &mut GameOptions, value: &str| {
+    menu.add(option_ui::OptionUi::new(&ctx, 400i32, "", vec!["1-Player", "2-Player", "OGS"], |ui: Rc<RefCell<&mut UiController>>, game_options: &mut GameOptions, value: &str| {}));
+    menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*1, "Board Size" , vec!["9x9", "13x13", "19x19"], |ui: Rc<RefCell<&mut UiController>>, game_options: &mut GameOptions, value: &str| {
         game_options.board_size = match value {
             "9" => 9,
             "13" => 13,
@@ -38,16 +38,23 @@ fn main() {
             _ => 19,
         };
     }));
-    menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*2, "Clock", vec!["None", "Rapid", "Blitz"], |ui: &mut UiController, game_options: &mut GameOptions, value: &str| { }));
-    menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*3, "Handicap", vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], |ui: &mut UiController, game_options: &mut GameOptions, value: &str| { }));
-    menu.add(option_ui::OptionUi::new(&ctx, 1400i32, "", vec!["Play"], |ui: &mut UiController, game_options: &mut GameOptions, value: &str| { }));
+    menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*2, "Clock", vec!["None", "Rapid", "Blitz"], |ui: Rc<RefCell<&mut UiController>>, game_options: &mut GameOptions, value: &str| { }));
+    menu.add(option_ui::OptionUi::new(&ctx, 400i32 + 200*3, "Handicap", vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], |ui: Rc<RefCell<&mut UiController>>, game_options: &mut GameOptions, value: &str| { }));
+    menu.add(option_ui::OptionUi::new(&ctx, 1400i32, "", vec!["Play"], |ui: Rc<RefCell<&mut UiController>>, game_options: &mut GameOptions, value: &str| {
+        let scene = create_game_scene(&ui.borrow_mut().context);
+        UiController::change_scene(ui, Rc::from(RefCell::new(scene)));
+    }));
 
-    let game_controller : Box<dyn GameController> = Box::new(two_player_controller::TwoPlayerController::new(BoardState::new(19)));
-    let mut gameplay = ui::Scene::new(game_controller);
-    gameplay.add(board_ui::BoardUi::new(&ctx, 19));
-    gameplay.add(player_ui::PlayerUi::new(&ctx, "White", true, Player::White));
-    gameplay.add(player_ui::PlayerUi::new(&ctx, "Black", false, Player::Black));
-    gameplay.add(quit_ui::QuitUi::new(&ctx));
+    fn create_game_scene(ctx: &ApplicationContext) -> ui::Scene<Box<dyn GameController>> {
+        let game_controller : Box<dyn GameController> = Box::new(two_player_controller::TwoPlayerController::new(BoardState::new(19)));
+        let mut gameplay = ui::Scene::new(game_controller);
+        gameplay.add(board_ui::BoardUi::new(ctx, 19));
+        gameplay.add(player_ui::PlayerUi::new(ctx, "White", true, Player::White));
+        gameplay.add(player_ui::PlayerUi::new(ctx, "Black", false, Player::Black));
+        gameplay.add(quit_ui::QuitUi::new(ctx));
+        
+        return gameplay
+    }
 
     let mut controller = UiController::new(ctx, Rc::from(RefCell::new(menu)));
     let mut ui = Rc::from(RefCell::new(&mut controller));

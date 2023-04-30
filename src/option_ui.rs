@@ -20,11 +20,11 @@ pub struct OptionUi {
     text_size: i32,
     title: String,
     title_position: Point2<i32>,
-    callback: fn(&mut UiController, &mut GameOptions, &str),
+    callback: fn(Rc<RefCell<&mut UiController>>, &mut GameOptions, &str),
 }
 
 impl OptionUi {
-    pub fn new(ctx: &ApplicationContext, vertical_position: i32, title: &str, option_names: Vec<&str>, callback: fn(&mut UiController, &mut GameOptions, &str)) -> OptionUi {
+    pub fn new(ctx: &ApplicationContext, vertical_position: i32, title: &str, option_names: Vec<&str>, callback: fn(Rc<RefCell<&mut UiController>>, &mut GameOptions, &str)) -> OptionUi {
         let minimum_border = 250;
         let title_offset = vec2(30, -50);
         let height = 80;
@@ -73,7 +73,7 @@ impl UiComponent<GameOptions> for OptionUi {
                     let box_end = box_start + self.box_size.cast().unwrap();
                     if finger.pos.x >= box_start.x as u16 && finger.pos.x < box_end.x as u16 && finger.pos.y >= box_start.y as u16 && finger.pos.y < box_end.y as u16 {
                         self.selected = i;
-                        (self.callback)(*ui.borrow_mut(), state, &*self.option_names[self.selected]);
+                        (self.callback)(ui.clone(), state, &*self.option_names[self.selected]);
 
                         ui::post_redraw();
                     }
