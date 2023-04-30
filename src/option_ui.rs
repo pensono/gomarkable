@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::string::String;
 use cgmath::{Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
@@ -6,7 +8,7 @@ use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRef
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::{drawing, GameOptions, text, ui};
 use crate::text::TextAlignment;
-use crate::ui::UiComponent;
+use crate::ui::{UiComponent, UiController};
 
 pub struct OptionUi {
     option_names: Vec<String>,
@@ -18,11 +20,11 @@ pub struct OptionUi {
     text_size: i32,
     title: String,
     title_position: Point2<i32>,
-    callback: fn(&mut GameOptions, &str),
+    callback: fn(&mut UiController, &mut GameOptions, &str),
 }
 
 impl OptionUi {
-    pub fn new(ctx: &ApplicationContext, vertical_position: i32, title: &str, option_names: Vec<&str>, callback: fn(&mut GameOptions, &str)) -> OptionUi {
+    pub fn new(ctx: &ApplicationContext, vertical_position: i32, title: &str, option_names: Vec<&str>, callback: fn(&mut UiController, &mut GameOptions, &str)) -> OptionUi {
         let minimum_border = 250;
         let title_offset = vec2(30, -50);
         let height = 80;
@@ -62,7 +64,7 @@ impl OptionUi {
 }
 
 impl UiComponent<GameOptions> for OptionUi {
-    fn handle_event(self: &mut OptionUi, ctx: &mut ApplicationContext, state: &mut GameOptions, event: &InputEvent) {
+    fn handle_event(self: &mut OptionUi, ui: Rc<RefCell<&mut UiController>>, state: &mut GameOptions, event: &InputEvent) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             if let MultitouchEvent::Press { finger } = event
             {
@@ -71,7 +73,7 @@ impl UiComponent<GameOptions> for OptionUi {
                     let box_end = box_start + self.box_size.cast().unwrap();
                     if finger.pos.x >= box_start.x as u16 && finger.pos.x < box_end.x as u16 && finger.pos.y >= box_start.y as u16 && finger.pos.y < box_end.y as u16 {
                         self.selected = i;
-                        (self.callback)(state, &*self.option_names[self.selected]);
+                        (self.callback)(*ui.borrow_mut(), state, &*self.option_names[self.selected]);
 
                         ui::post_redraw();
                     }
@@ -80,8 +82,8 @@ impl UiComponent<GameOptions> for OptionUi {
         }
     }
 
-    fn draw(self: &OptionUi, ctx: &mut ApplicationContext, state: &GameOptions) {
-        let fb = ctx.get_framebuffer_ref();
+    fn draw(self: &OptionUi, ui: Rc<RefCell<&mut UiController>>, state: &GameOptions) {
+        let fb = ui.borrow_mut().context.get_framebuffer_ref();
 
         text::draw_text(fb, self.title_position, TextAlignment::Left, self.text_size, color::BLACK, &self.title);
 

@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::cmp::min;
+use std::rc::Rc;
 use cgmath::{Array, ElementWise, EuclideanSpace, Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
@@ -8,7 +10,7 @@ use crate::cgmath_extensions::Decomposable;
 use crate::{go, ui};
 use crate::game_controller::GameController;
 use crate::go::BoardState;
-use crate::ui::UiComponent;
+use crate::ui::{UiComponent, UiController};
 
 pub struct BoardUi {
     size: usize,
@@ -80,7 +82,7 @@ impl BoardUi {
 }
 
 impl UiComponent<Box<dyn GameController>> for BoardUi {
-    fn handle_event(self: &mut BoardUi, ctx: &mut ApplicationContext, state: &mut Box<dyn GameController>, event: &InputEvent) {
+    fn handle_event(self: &mut BoardUi, ui: Rc<RefCell<&mut UiController>>, state: &mut Box<dyn GameController>, event: &InputEvent) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             // TODO show a ghost square on press/move, and play on release
             if let MultitouchEvent::Press { finger } = event
@@ -99,10 +101,10 @@ impl UiComponent<Box<dyn GameController>> for BoardUi {
         }
     }
 
-    fn draw(self: &BoardUi, ctx: &mut ApplicationContext, state: &Box<dyn GameController>) {
+    fn draw(self: &BoardUi, ui: Rc<RefCell<&mut UiController>>, state: &Box<dyn GameController>) {
         // TODO when a piece is played, only redraw the parts which changed. Could be more responsive?
 
-        let fb = ctx.get_framebuffer_ref();
+        let fb = ui.borrow_mut().context.get_framebuffer_ref();
         let board = state.current_game_state();
 
         // Board background. This is important for if any pieces are removed since we never fully clear the screen

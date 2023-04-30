@@ -13,7 +13,7 @@ DEVICE_HOST ?= root@$(DEVICE_IP)
 	./gen_cargo_config.py
 	rm gen_cargo_config.py
 
-./target/$(TARGET)/release/gomarkable: .cargo/config src/*.rs build
+./target/$(TARGET)/debug/gomarkable: .cargo/config src/*.rs build
 
 test:
 	# Notice we aren't using the armv7 target here
@@ -24,11 +24,11 @@ install-draft: gomarkable.draft
 	scp gomarkable.draft $(DEVICE_HOST):/home/root/.config/draft/gomarkable.draft
 
 build:
-	cargo build --release --target=$(TARGET)
+	cargo build --target=$(TARGET)
 
-deploy: ./target/$(TARGET)/release/gomarkable
+deploy: ./target/$(TARGET)/debug/gomarkable
 	ssh $(DEVICE_HOST) 'killall -q -9 gomarkable || true; systemctl stop xochitl remux || true'
-	scp ./target/$(TARGET)/release/gomarkable $(DEVICE_HOST):
+	scp ./target/$(TARGET)/debug/gomarkable $(DEVICE_HOST):
 	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./gomarkable'
 run:
 	ssh $(DEVICE_HOST) 'killall -q -9 gomarkable || true; systemctl stop xochitl remux || true'

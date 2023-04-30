@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::fmt::format;
+use std::rc::Rc;
 use std::string::String;
 use cgmath::{Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
@@ -6,10 +8,9 @@ use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWI
 use libremarkable::framebuffer::{draw, FramebufferDraw, FramebufferIO, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::{drawing, go, text};
-use crate::cgmath_extensions::Decomposable;
 use crate::game_controller::GameController;
 use crate::go::Player;
-use crate::ui::UiComponent;
+use crate::ui::{UiComponent, UiController};
 
 pub struct PlayerUi {
     player: Player,
@@ -52,8 +53,8 @@ impl PlayerUi {
 }
 
 impl UiComponent<Box<dyn GameController>> for PlayerUi {
-    fn draw(self: &PlayerUi, ctx: &mut ApplicationContext, state: &Box<dyn GameController>) {
-        let fb = ctx.get_framebuffer_ref();
+    fn draw(self: &PlayerUi, ui: Rc<RefCell<&mut UiController>>, state: &Box<dyn GameController>) {
+        let fb = ui.borrow_mut().context.get_framebuffer_ref();
         let game_state = state.current_game_state();
 
         if game_state.current_player == self.player {

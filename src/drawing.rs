@@ -1,5 +1,5 @@
 use std::cmp::{max, min};
-use cgmath::{Array, Point2, point2, vec2, Vector2};
+use cgmath::{Point2, point2, vec2, Vector2};
 use libremarkable::framebuffer::common::color;
 use libremarkable::framebuffer;
 use libremarkable::image::{RgbImage};

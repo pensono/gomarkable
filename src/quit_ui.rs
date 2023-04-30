@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use cgmath::{Point2, point2, vec2, Vector2};
 use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
@@ -6,7 +8,7 @@ use libremarkable::image;
 use libremarkable::image::RgbImage;
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::{drawing};
-use crate::ui::UiComponent;
+use crate::ui::{UiComponent, UiController};
 
 pub struct QuitUi {
     image: RgbImage,
@@ -28,7 +30,7 @@ impl QuitUi {
 }
 
 impl<State> UiComponent<State> for QuitUi {
-    fn handle_event(self: &mut QuitUi, ctx: &mut ApplicationContext, _: &mut State, event: &InputEvent) {
+    fn handle_event(self: &mut QuitUi, ui: Rc<RefCell<&mut UiController>>, _: &mut State, event: &InputEvent) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             if let MultitouchEvent::Release { finger } = event
             {
@@ -40,11 +42,11 @@ impl<State> UiComponent<State> for QuitUi {
         }
     }
 
-    fn draw(self: &QuitUi, ctx: &mut ApplicationContext, _: &State) {
-        let fb = ctx.get_framebuffer_ref();
+    fn draw(self: &QuitUi, ui: Rc<RefCell<&mut UiController>>, _: &State) {
+        let fb = ui.borrow_mut().context.get_framebuffer_ref();
 
         // TODO add a white outline around the quit button
-        drawing::draw_blended_image(ctx.get_framebuffer_ref(), &self.image, self.position);
+        drawing::draw_blended_image(fb, &self.image, self.position);
 
         let refresh_rect = mxcfb_rect {
             top: self.position.y as u32,
