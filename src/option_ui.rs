@@ -6,11 +6,11 @@ use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
 use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::{InputEvent, MultitouchEvent};
-use crate::{drawing, GameOptions, text, ui};
+use crate::{drawing, text, ui};
 use crate::text::TextAlignment;
 use crate::ui::{UiComponent, UiController};
 
-pub struct OptionUi {
+pub struct OptionUi<State> {
     option_names: Vec<String>,
     selected: usize,
     box_starts: Vec<Point2<i32>>,
@@ -20,11 +20,11 @@ pub struct OptionUi {
     text_size: i32,
     title: String,
     title_position: Point2<i32>,
-    callback: fn(Rc<RefCell<&mut UiController>>, &mut GameOptions, &str),
+    callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut State, &String)>,
 }
 
-impl OptionUi {
-    pub fn new(ctx: &ApplicationContext, vertical_position: i32, title: &str, option_names: Vec<&str>, callback: fn(Rc<RefCell<&mut UiController>>, &mut GameOptions, &str)) -> OptionUi {
+impl<State> OptionUi<State> {
+    pub fn new(ctx: &ApplicationContext, vertical_position: i32, title: String, option_names: Vec<String>, callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut State, &String)>) -> OptionUi<State> {
         let minimum_border = 250;
         let title_offset = vec2(30, -50);
         let height = 80;
@@ -49,22 +49,22 @@ impl OptionUi {
         let title_position = point2(minimum_border as i32, vertical_position) + title_offset;
 
         OptionUi {
-            option_names: option_names.iter().map(|s| s.to_string()).collect(),
+            option_names,
             selected: 0,
             box_starts,
             box_size,
             size,
             text_offset,
             text_size,
-            title: title.to_string(),
+            title,
             title_position,
             callback,
         }
     }
 }
 
-impl UiComponent<GameOptions> for OptionUi {
-    fn handle_event(self: &mut OptionUi, ui: Rc<RefCell<&mut UiController>>, state: &mut GameOptions, event: &InputEvent) {
+impl<State> UiComponent<State> for OptionUi<State> {
+    fn handle_event(&mut self, ui: Rc<RefCell<&mut UiController>>, state: &mut State, event: &InputEvent) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             if let MultitouchEvent::Press { finger } = event
             {
@@ -73,7 +73,7 @@ impl UiComponent<GameOptions> for OptionUi {
                     let box_end = box_start + self.box_size.cast().unwrap();
                     if finger.pos.x >= box_start.x as u16 && finger.pos.x < box_end.x as u16 && finger.pos.y >= box_start.y as u16 && finger.pos.y < box_end.y as u16 {
                         self.selected = i;
-                        (self.callback)(ui.clone(), state, &*self.option_names[self.selected]);
+                        (self.callback)(ui.clone(), state, &self.option_names[self.selected]);
 
                         ui::post_redraw();
                     }
@@ -82,7 +82,7 @@ impl UiComponent<GameOptions> for OptionUi {
         }
     }
 
-    fn draw(self: &OptionUi, ui: Rc<RefCell<&mut UiController>>, state: &GameOptions) {
+    fn draw(&self, ui: Rc<RefCell<&mut UiController>>, state: &State) {
         let fb = ui.borrow_mut().context.get_framebuffer_ref();
 
         text::draw_text(fb, self.title_position, TextAlignment::Left, self.text_size, color::BLACK, &self.title);

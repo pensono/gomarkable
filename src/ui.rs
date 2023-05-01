@@ -4,11 +4,12 @@ use libremarkable::appctx::ApplicationContext;
 use libremarkable::input::InputEvent;
 use std::sync::atomic::AtomicBool;
 use libremarkable::framebuffer::common::{display_temp, dither_mode, DRAWING_QUANT_BIT, waveform_mode};
-use libremarkable::framebuffer::FramebufferRefresh;
+use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh};
 
 pub struct UiController<'a> {
     pub context: ApplicationContext<'a>,
-    pub current_scene: Rc<RefCell<dyn SceneTrait>>
+    pub current_scene: Rc<RefCell<dyn SceneTrait>>,
+    pending_scene_change: bool,
 }
 
 impl<'a> UiController<'a> {
@@ -16,20 +17,21 @@ impl<'a> UiController<'a> {
         UiController {
             context,
             current_scene: initial_scene,
+            pending_scene_change: false,
         }
     }
 
     pub fn change_scene(self_: Rc<RefCell<&mut Self>>, new_scene: Rc<RefCell<dyn SceneTrait>>) {
-        let mut self_ref = self_.borrow_mut();
-        self_ref.current_scene = new_scene;
-        drop(self_ref);
-        UiController::full_refresh(self_);
+        self_.borrow_mut().current_scene = new_scene;
+        self_.borrow_mut().pending_scene_change = true;
     }
 
     fn full_refresh(self_: Rc<RefCell<&mut Self>>) {
-        self_.borrow_mut().context.clear(true);
+        self_.borrow_mut().context.get_framebuffer_ref().clear();
+
         let mut scene = self_.clone().borrow_mut().current_scene.clone();
         scene.borrow_mut().draw(self_.clone());
+
         self_.borrow_mut().context.get_framebuffer_ref().full_refresh(
             waveform_mode::WAVEFORM_MODE_INIT,
             display_temp::TEMP_USE_MAX,
@@ -46,6 +48,17 @@ impl<'a> UiController<'a> {
         context.start_event_loop(false, true, false, |ctx: &mut ApplicationContext, event: InputEvent| {
             let mut scene = self_.clone().borrow_mut().current_scene.clone();
             scene.borrow_mut().handle_event(self_.clone(), event);
+
+            if self_.borrow_mut().pending_scene_change {
+                UiController::full_refresh(self_.clone());
+                self_.borrow_mut().pending_scene_change = false;
+            }
+
+            while needs_redraw() {
+                reset_redraw();
+                let mut scene = self_.clone().borrow_mut().current_scene.clone();
+                scene.borrow_mut().draw(self_.clone());
+            }
         });
     }
 }
@@ -84,11 +97,6 @@ impl<State> SceneTrait for Scene<State> {
     fn handle_event(&mut self, ui: Rc<RefCell<&mut UiController>>, event: InputEvent) {
         for component in self.components.iter_mut() {
             component.handle_event(ui.clone(), &mut self.state, &event);
-        }
-
-        while needs_redraw() {
-            reset_redraw();
-            self.draw(ui.clone());
         }
     }
 }

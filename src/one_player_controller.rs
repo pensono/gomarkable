@@ -4,16 +4,15 @@ use crate::game_controller::{ControllerOption, GameController};
 use crate::go::BoardState;
 use crate::utility::vec_of_strings;
 
-
-pub struct TwoPlayerController {
+pub struct OnePlayerController {
     state: BoardState,
 }
 
-impl TwoPlayerController {
-    pub(crate) fn new(options: HashMap<String, String>) -> TwoPlayerController {
+impl OnePlayerController {
+    pub(crate) fn new(options: HashMap<String, String>) -> OnePlayerController {
         let board_size = options.get("Board Size").unwrap();
         let initial_state = BoardState::new(board_size.split("x").next().unwrap().parse().unwrap());
-        TwoPlayerController {
+        OnePlayerController {
             state: initial_state,
         }
     }
@@ -23,12 +22,11 @@ impl TwoPlayerController {
 pub fn options() -> Vec<ControllerOption> {
     vec![
         ControllerOption::new("Board Size", vec!["9x9", "13x13", "19x19"]),
-        ControllerOption::new("Clock", vec!["Blitz", "Rapid", "None"]),
-        ControllerOption::new("Handicap", vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]),
+        ControllerOption::new("Difficulty", vec!["Easy", "Medium", "Hard"]),
     ]
 }
 
-impl GameController for TwoPlayerController {
+impl GameController for OnePlayerController {
     fn current_game_state(&self) -> &BoardState {
         &self.state
     }
