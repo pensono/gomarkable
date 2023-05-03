@@ -1,6 +1,5 @@
 use crate::go::BoardState;
 use cgmath::Point2;
-use std::collections::HashMap;
 
 pub struct ControllerOption {
     pub(crate) name: String,

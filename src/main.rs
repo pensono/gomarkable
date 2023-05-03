@@ -1,17 +1,11 @@
 use crate::game_controller::{ControllerOption, GameController};
-use crate::go::{BoardState, Player};
+use crate::go::Player;
 use crate::ui::UiController;
 use crate::utility::vec_of_strings;
 use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{
-    display_temp, dither_mode, waveform_mode, DRAWING_QUANT_BIT,
-};
-use libremarkable::framebuffer::FramebufferRefresh;
-use libremarkable::input::InputEvent;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::thread::current;
 
 mod board_ui;
 mod cgmath_extensions;

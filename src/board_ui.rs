@@ -1,6 +1,5 @@
 use crate::cgmath_extensions::Decomposable;
 use crate::game_controller::GameController;
-use crate::go::BoardState;
 use crate::ui::{UiComponent, UiController};
 use crate::{go, ui};
 use cgmath::{point2, vec2, Array, ElementWise, EuclideanSpace, Point2, Vector2};

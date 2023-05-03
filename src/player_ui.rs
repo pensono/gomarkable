@@ -1,18 +1,16 @@
 use crate::game_controller::GameController;
 use crate::go::Player;
 use crate::ui::{UiComponent, UiController};
-use crate::{drawing, go, text};
+use crate::{drawing, text};
 use cgmath::{point2, vec2, Point2, Vector2};
 use libremarkable::appctx::ApplicationContext;
 use libremarkable::framebuffer::common::{
     color, display_temp, dither_mode, mxcfb_rect, waveform_mode, DRAWING_QUANT_BIT,
 };
 use libremarkable::framebuffer::{
-    draw, FramebufferDraw, FramebufferIO, FramebufferRefresh, PartialRefreshMode,
+    draw, FramebufferDraw, FramebufferRefresh, PartialRefreshMode,
 };
-use libremarkable::input::{InputEvent, MultitouchEvent};
 use std::cell::RefCell;
-use std::fmt::format;
 use std::rc::Rc;
 use std::string::String;
 
