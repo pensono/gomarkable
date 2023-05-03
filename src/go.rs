@@ -183,17 +183,17 @@ mod tests {
     use cgmath::point2;
 
     #[test]
-    fn onlyPlayEachOnce() {
+    fn only_play_each_once() {
         let mut state = super::BoardState::new(19);
-        assert_eq!(state.try_play(point2(10, 10)), true);
-        assert_eq!(state.try_play(point2(10, 10)), false);
+        assert_eq!(state.try_play(point2(10, 10)), Ok(()));
+        assert_eq!(state.try_play(point2(10, 10)), Err("Can't play where a piece already is"));
     }
 
     #[test]
     fn ko() {
         let mut state = super::BoardState::new(19);
         state.ko = Some(point2(10, 10));
-        assert_eq!(state.try_play(point2(10, 10)), false);
+        assert_eq!(state.try_play(point2(10, 10)), Err("Can't play in the ko"));
     }
 
     #[test]
@@ -205,10 +205,10 @@ mod tests {
         state.board[11][10] = Some(super::Player::Black);
         state.board[10][10] = Some(super::Player::White);
 
-        assert_eq!(state.try_play(point2(10, 11)), true);
+        assert_eq!(state.try_play(point2(10, 11)), Ok(()));
 
         assert_eq!(state.captured_white, 1);
         assert_eq!(state.captured_black, 0);
-        assert_eq!(state..board[10][10], None);
+        assert_eq!(state.board[10][10], None);
     }
 }

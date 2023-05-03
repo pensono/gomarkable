@@ -8,7 +8,7 @@ use libremarkable::framebuffer::common::{
     color, display_temp, dither_mode, mxcfb_rect, waveform_mode, DRAWING_QUANT_BIT,
 };
 use libremarkable::framebuffer::{
-    draw, FramebufferDraw, FramebufferRefresh, PartialRefreshMode,
+    FramebufferDraw, FramebufferRefresh, PartialRefreshMode,
 };
 use std::cell::RefCell;
 use std::rc::Rc;

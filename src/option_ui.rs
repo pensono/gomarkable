@@ -107,7 +107,7 @@ impl<State> UiComponent<State> for OptionUi<State> {
         }
     }
 
-    fn draw(&self, ui: Rc<RefCell<&mut UiController>>, state: &State) {
+    fn draw(&self, ui: Rc<RefCell<&mut UiController>>, _state: &State) {
         let fb = ui.borrow_mut().context.get_framebuffer_ref();
 
         text::draw_text(

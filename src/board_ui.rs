@@ -99,7 +99,7 @@ impl BoardUi {
 impl UiComponent<Box<dyn GameController>> for BoardUi {
     fn handle_event(
         self: &mut BoardUi,
-        ui: Rc<RefCell<&mut UiController>>,
+        _ui: Rc<RefCell<&mut UiController>>,
         state: &mut Box<dyn GameController>,
         event: &InputEvent,
     ) {

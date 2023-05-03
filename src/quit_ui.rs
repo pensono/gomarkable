@@ -20,7 +20,7 @@ pub struct QuitUi {
 
 impl QuitUi {
     pub fn new(ctx: &ApplicationContext) -> QuitUi {
-        let (screen_height, screen_width) = ctx.get_dimensions();
+        let (_screen_height, screen_width) = ctx.get_dimensions();
         let image = image::load_from_memory(include_bytes!("../assets/quit.png"))
             .unwrap()
             .to_rgb8();
@@ -36,7 +36,7 @@ impl QuitUi {
 impl<State> UiComponent<State> for QuitUi {
     fn handle_event(
         self: &mut QuitUi,
-        ui: Rc<RefCell<&mut UiController>>,
+        _ui: Rc<RefCell<&mut UiController>>,
         _: &mut State,
         event: &InputEvent,
     ) {

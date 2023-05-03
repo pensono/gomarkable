@@ -34,7 +34,7 @@ impl<'a> UiController<'a> {
     fn full_refresh(self_: Rc<RefCell<&mut Self>>) {
         self_.borrow_mut().context.get_framebuffer_ref().clear();
 
-        let mut scene = self_.clone().borrow_mut().current_scene.clone();
+        let scene = self_.clone().borrow_mut().current_scene.clone();
         scene.borrow_mut().draw(self_.clone());
 
         self_
@@ -58,8 +58,8 @@ impl<'a> UiController<'a> {
             false,
             true,
             false,
-            |ctx: &mut ApplicationContext, event: InputEvent| {
-                let mut scene = self_.clone().borrow_mut().current_scene.clone();
+            |_ctx: &mut ApplicationContext, event: InputEvent| {
+                let scene = self_.clone().borrow_mut().current_scene.clone();
                 scene.borrow_mut().handle_event(self_.clone(), event);
 
                 if self_.borrow_mut().pending_scene_change {
@@ -69,7 +69,7 @@ impl<'a> UiController<'a> {
 
                 while needs_redraw() {
                     reset_redraw();
-                    let mut scene = self_.clone().borrow_mut().current_scene.clone();
+                    let scene = self_.clone().borrow_mut().current_scene.clone();
                     scene.borrow_mut().draw(self_.clone());
                 }
             },
@@ -117,9 +117,9 @@ impl<State> SceneTrait for Scene<State> {
 pub trait UiComponent<State: ?Sized> {
     fn handle_event(
         &mut self,
-        ui: Rc<RefCell<&mut UiController>>,
-        state: &mut State,
-        event: &InputEvent,
+        _ui: Rc<RefCell<&mut UiController>>,
+        _state: &mut State,
+        _event: &InputEvent,
     ) {
     }
     fn draw(&self, ui: Rc<RefCell<&mut UiController>>, state: &State);

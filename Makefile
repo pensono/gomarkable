@@ -26,6 +26,9 @@ install-draft: gomarkable.draft
 format:
 	cargo fmt
 
+fix:
+	cargo fix --release --target=$(TARGET) --allow-dirty
+	
 build:
 	cargo build --release --target=$(TARGET)
 

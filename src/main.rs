@@ -23,7 +23,7 @@ mod ui;
 mod utility;
 
 fn main() {
-    let mut ctx = ApplicationContext::default();
+    let ctx = ApplicationContext::default();
 
     let menu = create_menu_scene(
         &ctx,
@@ -31,7 +31,7 @@ fn main() {
         "2-Player".to_string(),
     );
     let mut controller = UiController::new(ctx, Rc::from(RefCell::new(menu)));
-    let mut ui = Rc::from(RefCell::new(&mut controller));
+    let ui = Rc::from(RefCell::new(&mut controller));
     UiController::start(ui);
 }
 
@@ -51,7 +51,7 @@ fn create_menu_scene(
         vec_of_strings!["1-Player", "2-Player", "OGS"],
         Box::new(
             |ui: Rc<RefCell<&mut UiController>>,
-             state: &mut HashMap<String, String>,
+             _state: &mut HashMap<String, String>,
              value: &String| {
                 let options = controller_options_from_name(&*value);
                 let scene = create_menu_scene(&ui.borrow_mut().context, options, value.clone());
@@ -69,7 +69,7 @@ fn create_menu_scene(
             option.name,
             option.values,
             Box::new(
-                move |ui: Rc<RefCell<&mut UiController>>,
+                move |_ui: Rc<RefCell<&mut UiController>>,
                       state: &mut HashMap<String, String>,
                       value: &String| {
                     state.insert(option_name_copy.clone(), value.clone());
@@ -88,7 +88,7 @@ fn create_menu_scene(
         Box::new(
             |ui: Rc<RefCell<&mut UiController>>,
              state: &mut HashMap<String, String>,
-             value: &String| {
+             _value: &String| {
                 let game_controller =
                     controller_from_name(&*state.get("Mode").unwrap(), state.clone());
                 let scene = create_game_scene(&ui.borrow_mut().context, game_controller);
