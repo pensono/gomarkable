@@ -46,7 +46,7 @@ fn main() {
 fn create_menu_scene(
     ctx: &ApplicationContext,
     options: Vec<ControllerOption>,
-    mut state: HashMap<String, String>
+    state: HashMap<String, String>
 ) -> ui::Scene<HashMap<String, String>> {
     let mut menu = ui::Scene::new(state);
 
@@ -61,7 +61,7 @@ fn create_menu_scene(
              value: &String| {
                 let options = controller_options_from_name(&*value);
                 let scene = create_menu_scene(&ui.borrow_mut().context, options, _state.clone());
-                UiController::change_scene(ui, Rc::from(RefCell::new(scene)));
+                UiController::change_scene(ui, Rc::from(RefCell::new(scene)), false);
             },
         ),
     ));
@@ -96,7 +96,7 @@ fn create_menu_scene(
                 let game_controller =
                     controller_from_name(&*state.get("Mode").unwrap(), state.clone());
                 let scene = create_game_scene(&ui.borrow_mut().context, game_controller);
-                UiController::change_scene(ui.clone(), Rc::from(RefCell::new(scene)));
+                UiController::change_scene(ui.clone(), Rc::from(RefCell::new(scene)), true);
             },
         ),
     ));

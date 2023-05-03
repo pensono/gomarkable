@@ -1,8 +1,6 @@
 use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{
-    display_temp, dither_mode, waveform_mode, DRAWING_QUANT_BIT,
-};
-use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh};
+use libremarkable::framebuffer::common::{display_temp, dither_mode, waveform_mode, DRAWING_QUANT_BIT, mxcfb_rect};
+use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::InputEvent;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -12,6 +10,7 @@ pub struct UiController<'a> {
     pub context: ApplicationContext<'a>,
     pub current_scene: Rc<RefCell<dyn SceneTrait>>,
     pending_scene_change: bool,
+    pending_scene_change_deep_refresh: bool,
 }
 
 impl<'a> UiController<'a> {
@@ -23,13 +22,15 @@ impl<'a> UiController<'a> {
             context,
             current_scene: initial_scene,
             pending_scene_change: false,
+            pending_scene_change_deep_refresh: false,
         }
     }
 
-    pub fn change_scene(self_: Rc<RefCell<&mut Self>>, new_scene: Rc<RefCell<dyn SceneTrait>>) {
+    pub fn change_scene(self_: Rc<RefCell<&mut Self>>, new_scene: Rc<RefCell<dyn SceneTrait>>, deep_refresh: bool) {
         self_.borrow_mut().current_scene = new_scene;
         self_.borrow_mut().current_scene.borrow_mut().initialize();
         self_.borrow_mut().pending_scene_change = true;
+        self_.borrow_mut().pending_scene_change_deep_refresh = deep_refresh;
     }
 
     fn full_refresh(self_: Rc<RefCell<&mut Self>>) {
@@ -49,9 +50,44 @@ impl<'a> UiController<'a> {
                 DRAWING_QUANT_BIT,
                 true,
             );
+
+        reset_redraw();
+    }
+
+    fn partial_refresh(self_: Rc<RefCell<&mut Self>>) {
+        self_.borrow_mut().context.get_framebuffer_ref().clear();
+
+        let scene = self_.clone().borrow_mut().current_scene.clone();
+        scene.borrow_mut().draw(self_.clone());
+
+        let (screen_height, screen_width) = self_
+            .borrow_mut()
+            .context.get_dimensions();
+        let screen_rect = mxcfb_rect {
+            top: 0,
+            left: 0,
+            width: screen_height,
+            height: screen_width,
+        };
+        self_
+            .borrow_mut()
+            .context
+            .get_framebuffer_ref()
+            .partial_refresh(
+                &screen_rect,
+                PartialRefreshMode::Async,
+                waveform_mode::WAVEFORM_MODE_GC16_FAST,
+                display_temp::TEMP_USE_REMARKABLE_DRAW,
+                dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+                DRAWING_QUANT_BIT,
+                false,
+            );
+
+        reset_redraw();
     }
 
     pub fn start(self_: Rc<RefCell<&mut Self>>) {
+        self_.borrow_mut().current_scene.borrow_mut().initialize();
         UiController::full_refresh(self_.clone());
 
         let context = self_.borrow_mut().context.upgrade_ref();
@@ -64,7 +100,11 @@ impl<'a> UiController<'a> {
                 scene.borrow_mut().handle_event(self_.clone(), event);
 
                 if self_.borrow_mut().pending_scene_change {
-                    UiController::full_refresh(self_.clone());
+                    if self_.borrow_mut().pending_scene_change_deep_refresh {
+                        UiController::full_refresh(self_.clone());
+                    } else {
+                        UiController::partial_refresh(self_.clone());
+                    }
                     self_.borrow_mut().pending_scene_change = false;
                 }
 
