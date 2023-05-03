@@ -1,4 +1,4 @@
-use cgmath::{BaseNum, vec2, Vector2};
+use cgmath::{vec2, BaseNum, Vector2};
 
 pub trait Decomposable<S: BaseNum> {
     fn x_component(self) -> Vector2<S>;

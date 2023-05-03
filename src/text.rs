@@ -1,18 +1,19 @@
- use std::fs::File;
-use std::io::Read;
-use cgmath::Point2;
-use libremarkable::framebuffer::common::color;
-use libremarkable::framebuffer;
-use rusttype::{point, Font, Scale};
-use once_cell::sync::Lazy;
 use crate::drawing;
+use cgmath::Point2;
+use libremarkable::framebuffer;
+use libremarkable::framebuffer::common::color;
+use once_cell::sync::Lazy;
+use rusttype::{point, Font, Scale};
+use std::fs::File;
+use std::io::Read;
 
 pub static UI_FONT: Lazy<Font<'static>> = Lazy::new(|| {
-    let mut file = File::open("/usr/share/fonts/ttf/noto/NotoSansUI-Bold.ttf").expect("Could not open ui font file");
+    let mut file = File::open("/usr/share/fonts/ttf/noto/NotoSansUI-Bold.ttf")
+        .expect("Could not open ui font file");
     let mut file_data = vec![];
-    file.read_to_end(&mut file_data).expect("Could not load ui font data");
-    Font::try_from_vec(file_data)
-        .expect("corrupted font data")
+    file.read_to_end(&mut file_data)
+        .expect("Could not load ui font data");
+    Font::try_from_vec(file_data).expect("corrupted font data")
 });
 
 pub enum TextAlignment {
@@ -41,7 +42,10 @@ pub fn draw_text(
         TextAlignment::Right => text_width(text_size, text) as f32,
     };
 
-    let start = point(pos.x as f32 - alignment_offset, pos.y as f32 + text_size as f32);
+    let start = point(
+        pos.x as f32 - alignment_offset,
+        pos.y as f32 + text_size as f32,
+    );
 
     // Loop through the glyphs in the text, positing each one on a line
     for glyph in UI_FONT.layout(text, scale, start) {
@@ -79,7 +83,6 @@ pub fn text_width(text_size: i32, text: &str) -> i32 {
 
     return last_glyph.pixel_bounding_box().unwrap().max.x;
 }
-
 
 fn scale_for_size(text_size: i32) -> Scale {
     // 2 is a magic value for noto UI? unsure what's going on but it works

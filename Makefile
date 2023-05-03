@@ -23,6 +23,9 @@ install-draft: gomarkable.draft
 	ssh $(DEVICE_HOST) 'mkdir -p /home/root/.config/draft'
 	scp gomarkable.draft $(DEVICE_HOST):/home/root/.config/draft/gomarkable.draft
 
+format:
+	cargo fmt
+
 build:
 	cargo build --release --target=$(TARGET)
 
@@ -30,6 +33,7 @@ deploy: ./target/$(TARGET)/release/gomarkable
 	ssh $(DEVICE_HOST) 'killall -q -9 gomarkable || true; systemctl stop xochitl remux || true'
 	scp ./target/$(TARGET)/release/gomarkable $(DEVICE_HOST):
 	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./gomarkable'
+
 run:
 	ssh $(DEVICE_HOST) 'killall -q -9 gomarkable || true; systemctl stop xochitl remux || true'
 	ssh $(DEVICE_HOST) './gomarkable'

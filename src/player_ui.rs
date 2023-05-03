@@ -1,16 +1,20 @@
+use crate::game_controller::GameController;
+use crate::go::Player;
+use crate::ui::{UiComponent, UiController};
+use crate::{drawing, go, text};
+use cgmath::{point2, vec2, Point2, Vector2};
+use libremarkable::appctx::ApplicationContext;
+use libremarkable::framebuffer::common::{
+    color, display_temp, dither_mode, mxcfb_rect, waveform_mode, DRAWING_QUANT_BIT,
+};
+use libremarkable::framebuffer::{
+    draw, FramebufferDraw, FramebufferIO, FramebufferRefresh, PartialRefreshMode,
+};
+use libremarkable::input::{InputEvent, MultitouchEvent};
 use std::cell::RefCell;
 use std::fmt::format;
 use std::rc::Rc;
 use std::string::String;
-use cgmath::{Point2, point2, vec2, Vector2};
-use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
-use libremarkable::framebuffer::{draw, FramebufferDraw, FramebufferIO, FramebufferRefresh, PartialRefreshMode};
-use libremarkable::input::{InputEvent, MultitouchEvent};
-use crate::{drawing, go, text};
-use crate::game_controller::GameController;
-use crate::go::Player;
-use crate::ui::{UiComponent, UiController};
 
 pub struct PlayerUi {
     player: Player,
@@ -38,7 +42,8 @@ impl PlayerUi {
 
         let text_topline = (height as i32 - text_size as i32) / 2;
         let name_position = rect_start + vec2(padding + height as i32, text_topline);
-        let captures_position = rect_start + vec2(screen_width as i32 - padding - height as i32, text_topline);
+        let captures_position =
+            rect_start + vec2(screen_width as i32 - padding - height as i32, text_topline);
 
         PlayerUi {
             player,
@@ -70,13 +75,13 @@ impl UiComponent<Box<dyn GameController>> for PlayerUi {
             text::TextAlignment::Left,
             self.text_size,
             color::BLACK,
-            self.player_name.as_str()
+            self.player_name.as_str(),
         );
 
         let captures = game_state.captures_made_by(self.player);
         let mut captures_string = match captures {
             1 => format!("{} Capture", captures),
-            _ => format!("{} Captures", captures)
+            _ => format!("{} Captures", captures),
         };
 
         if self.player == Player::White {
@@ -89,7 +94,7 @@ impl UiComponent<Box<dyn GameController>> for PlayerUi {
             text::TextAlignment::Right,
             self.text_size,
             color::BLACK,
-            captures_string.as_str()
+            captures_string.as_str(),
         );
 
         let refresh_rect = mxcfb_rect {
@@ -106,7 +111,7 @@ impl UiComponent<Box<dyn GameController>> for PlayerUi {
             display_temp::TEMP_USE_PAPYRUS,
             dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
             DRAWING_QUANT_BIT,
-            false
+            false,
         );
     }
 }

@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use cgmath::Point2;
 use crate::game_controller::{ControllerOption, GameController};
 use crate::go::BoardState;
 use crate::utility::vec_of_strings;
+use cgmath::Point2;
+use std::collections::HashMap;
 
 pub struct OgsController {
     state: BoardState,

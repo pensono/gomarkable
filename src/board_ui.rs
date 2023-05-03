@@ -1,16 +1,18 @@
-use std::cell::RefCell;
-use std::cmp::min;
-use std::rc::Rc;
-use cgmath::{Array, ElementWise, EuclideanSpace, Point2, point2, vec2, Vector2};
-use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
-use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
-use libremarkable::input::{InputEvent, MultitouchEvent};
 use crate::cgmath_extensions::Decomposable;
-use crate::{go, ui};
 use crate::game_controller::GameController;
 use crate::go::BoardState;
 use crate::ui::{UiComponent, UiController};
+use crate::{go, ui};
+use cgmath::{point2, vec2, Array, ElementWise, EuclideanSpace, Point2, Vector2};
+use libremarkable::appctx::ApplicationContext;
+use libremarkable::framebuffer::common::{
+    color, display_temp, dither_mode, mxcfb_rect, waveform_mode, DRAWING_QUANT_BIT,
+};
+use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
+use libremarkable::input::{InputEvent, MultitouchEvent};
+use std::cell::RefCell;
+use std::cmp::min;
+use std::rc::Rc;
 
 pub struct BoardUi {
     size: usize,
@@ -25,21 +27,31 @@ pub struct BoardUi {
 fn hoshi_points(size: usize) -> Vec<Point2<usize>> {
     match size {
         19 => vec![
-            point2(3, 3),point2(9, 3),point2(15, 3),
-            point2(3, 9),point2(9, 9),point2(15, 9),
-            point2(3, 15),point2(9, 15),point2(15, 15),
+            point2(3, 3),
+            point2(9, 3),
+            point2(15, 3),
+            point2(3, 9),
+            point2(9, 9),
+            point2(15, 9),
+            point2(3, 15),
+            point2(9, 15),
+            point2(15, 15),
         ],
         13 => vec![
-            point2(3, 3),point2(10, 3),
+            point2(3, 3),
+            point2(10, 3),
             point2(6, 6),
-            point2(3, 10),point2(10, 10),
+            point2(3, 10),
+            point2(10, 10),
         ],
         9 => vec![
-            point2(2, 2), point2(6, 2),
+            point2(2, 2),
+            point2(6, 2),
             point2(4, 4),
-            point2(2, 6), point2(6, 6),
+            point2(2, 6),
+            point2(6, 6),
         ],
-        _ => vec![]
+        _ => vec![],
     }
 }
 
@@ -57,7 +69,9 @@ impl BoardUi {
         let (screen_height, screen_width) = ctx.get_dimensions();
         let screen_size = vec2(screen_width as i32, screen_height as i32);
 
-        let square_dimension = (min(screen_width, screen_height) as i32 - (minimum_border * 2) - line_width as i32) / (size - 1) as i32;
+        let square_dimension =
+            (min(screen_width, screen_height) as i32 - (minimum_border * 2) - line_width as i32)
+                / (size - 1) as i32;
         let square_size = Vector2::from_value(square_dimension);
         let stone_radius = ((square_dimension - stone_gap) / 2) as u32;
 
@@ -77,20 +91,35 @@ impl BoardUi {
     }
 
     fn board_to_screen(self: &BoardUi, point: Point2<usize>) -> Point2<i32> {
-        self.board_start + (self.square_size.x_component() * point.x as i32) + (self.square_size.y_component() * point.y as i32)
+        self.board_start
+            + (self.square_size.x_component() * point.x as i32)
+            + (self.square_size.y_component() * point.y as i32)
     }
 }
 
 impl UiComponent<Box<dyn GameController>> for BoardUi {
-    fn handle_event(self: &mut BoardUi, ui: Rc<RefCell<&mut UiController>>, state: &mut Box<dyn GameController>, event: &InputEvent) {
+    fn handle_event(
+        self: &mut BoardUi,
+        ui: Rc<RefCell<&mut UiController>>,
+        state: &mut Box<dyn GameController>,
+        event: &InputEvent,
+    ) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
             // TODO show a ghost square on press/move, and play on release
-            if let MultitouchEvent::Press { finger } = event
-            {
-                let board_position = Point2::from_vec(finger.pos.cast().unwrap() - self.board_start);
-                let point = Point2::from_vec((board_position + (self.square_size / 2)).to_vec().div_element_wise(self.square_size));
+            if let MultitouchEvent::Press { finger } = event {
+                let board_position =
+                    Point2::from_vec(finger.pos.cast().unwrap() - self.board_start);
+                let point = Point2::from_vec(
+                    (board_position + (self.square_size / 2))
+                        .to_vec()
+                        .div_element_wise(self.square_size),
+                );
 
-                if point.x >= 0 && point.x < self.size as i32 && point.y >= 0 && point.y < self.size as i32 {
+                if point.x >= 0
+                    && point.x < self.size as i32
+                    && point.y >= 0
+                    && point.y < self.size as i32
+                {
                     let legal_move = state.try_play(point.cast().unwrap()).is_ok();
 
                     if legal_move {
@@ -111,7 +140,7 @@ impl UiComponent<Box<dyn GameController>> for BoardUi {
         fb.fill_rect(
             self.board_start - self.square_size,
             (self.board_size + self.square_size * 2).cast().unwrap(),
-            color::WHITE
+            color::WHITE,
         );
 
         // Draw the board outline
@@ -122,14 +151,24 @@ impl UiComponent<Box<dyn GameController>> for BoardUi {
             color::BLACK,
         );
 
-        for i in 1..(self.size-1) {
+        for i in 1..(self.size - 1) {
             // Draw the vertical lines
             let vertical_start = self.board_to_screen(point2(i, 0));
-            fb.draw_line(vertical_start, vertical_start + self.board_size.y_component(), self.line_width, color::BLACK);
+            fb.draw_line(
+                vertical_start,
+                vertical_start + self.board_size.y_component(),
+                self.line_width,
+                color::BLACK,
+            );
 
             // Draw the horizontal lines
             let horizontal_start = self.board_to_screen(point2(0, i));
-            fb.draw_line(horizontal_start, horizontal_start + self.board_size.x_component(), self.line_width, color::BLACK);
+            fb.draw_line(
+                horizontal_start,
+                horizontal_start + self.board_size.x_component(),
+                self.line_width,
+                color::BLACK,
+            );
         }
 
         // Draw star points
@@ -149,7 +188,11 @@ impl UiComponent<Box<dyn GameController>> for BoardUi {
                     Some(go::Player::White) => {
                         // Unfortunately, there's no draw with width, but this looks fine
                         fb.fill_circle(position.into(), self.stone_radius, color::BLACK);
-                        fb.fill_circle(position.into(), self.stone_radius - self.line_width, color::WHITE);
+                        fb.fill_circle(
+                            position.into(),
+                            self.stone_radius - self.line_width,
+                            color::WHITE,
+                        );
                     }
                     None => {}
                 }
@@ -169,7 +212,12 @@ impl UiComponent<Box<dyn GameController>> for BoardUi {
         if let Some(point) = board.ko {
             let center = self.board_to_screen(point);
             let size = vec2(self.stone_radius as i32, self.stone_radius as i32);
-            fb.draw_rect(center - size / 2, size.cast().unwrap(), self.line_width / 2, color::BLACK);
+            fb.draw_rect(
+                center - size / 2,
+                size.cast().unwrap(),
+                self.line_width / 2,
+                color::BLACK,
+            );
         }
 
         let refresh_rect = mxcfb_rect {
@@ -186,7 +234,7 @@ impl UiComponent<Box<dyn GameController>> for BoardUi {
             display_temp::TEMP_USE_REMARKABLE_DRAW,
             dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
             DRAWING_QUANT_BIT,
-            false
+            false,
         );
     }
 }

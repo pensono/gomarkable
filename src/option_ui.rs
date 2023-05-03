@@ -1,14 +1,16 @@
+use crate::text::TextAlignment;
+use crate::ui::{UiComponent, UiController};
+use crate::{drawing, text, ui};
+use cgmath::{point2, vec2, Point2, Vector2};
+use libremarkable::appctx::ApplicationContext;
+use libremarkable::framebuffer::common::{
+    color, display_temp, dither_mode, mxcfb_rect, waveform_mode, DRAWING_QUANT_BIT,
+};
+use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
+use libremarkable::input::{InputEvent, MultitouchEvent};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
-use cgmath::{Point2, point2, vec2, Vector2};
-use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{color, display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
-use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
-use libremarkable::input::{InputEvent, MultitouchEvent};
-use crate::{drawing, text, ui};
-use crate::text::TextAlignment;
-use crate::ui::{UiComponent, UiController};
 
 pub struct OptionUi<State> {
     option_names: Vec<String>,
@@ -24,7 +26,13 @@ pub struct OptionUi<State> {
 }
 
 impl<State> OptionUi<State> {
-    pub fn new(ctx: &ApplicationContext, vertical_position: i32, title: String, option_names: Vec<String>, callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut State, &String)>) -> OptionUi<State> {
+    pub fn new(
+        ctx: &ApplicationContext,
+        vertical_position: i32,
+        title: String,
+        option_names: Vec<String>,
+        callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut State, &String)>,
+    ) -> OptionUi<State> {
         let minimum_border = 250;
         let title_offset = vec2(30, -50);
         let height = 80;
@@ -37,14 +45,23 @@ impl<State> OptionUi<State> {
         let (_, screen_width) = ctx.get_dimensions();
 
         let size = vec2(screen_width - minimum_border * 2 as u32, height);
-        let box_size = vec2((size.x  - spacing * (option_names.len() - 1) as u32) / option_names.len() as u32, height);
+        let box_size = vec2(
+            (size.x - spacing * (option_names.len() - 1) as u32) / option_names.len() as u32,
+            height,
+        );
 
         let mut box_starts = Vec::new();
         for i in 0..option_names.len() {
-            box_starts.push(point2((minimum_border + (box_size.x + spacing) * i as u32) as i32, vertical_position ));
+            box_starts.push(point2(
+                (minimum_border + (box_size.x + spacing) * i as u32) as i32,
+                vertical_position,
+            ));
         }
 
-        let text_offset = vec2(box_size.x as i32 / 2i32, (height as i32 - text_size as i32) / 2);
+        let text_offset = vec2(
+            box_size.x as i32 / 2i32,
+            (height as i32 - text_size as i32) / 2,
+        );
 
         let title_position = point2(minimum_border as i32, vertical_position) + title_offset;
 
@@ -64,14 +81,22 @@ impl<State> OptionUi<State> {
 }
 
 impl<State> UiComponent<State> for OptionUi<State> {
-    fn handle_event(&mut self, ui: Rc<RefCell<&mut UiController>>, state: &mut State, event: &InputEvent) {
+    fn handle_event(
+        &mut self,
+        ui: Rc<RefCell<&mut UiController>>,
+        state: &mut State,
+        event: &InputEvent,
+    ) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
-            if let MultitouchEvent::Press { finger } = event
-            {
+            if let MultitouchEvent::Press { finger } = event {
                 for i in 0..self.box_starts.len() {
                     let box_start = self.box_starts[i];
                     let box_end = box_start + self.box_size.cast().unwrap();
-                    if finger.pos.x >= box_start.x as u16 && finger.pos.x < box_end.x as u16 && finger.pos.y >= box_start.y as u16 && finger.pos.y < box_end.y as u16 {
+                    if finger.pos.x >= box_start.x as u16
+                        && finger.pos.x < box_end.x as u16
+                        && finger.pos.y >= box_start.y as u16
+                        && finger.pos.y < box_end.y as u16
+                    {
                         self.selected = i;
                         (self.callback)(ui.clone(), state, &self.option_names[self.selected]);
 
@@ -85,16 +110,37 @@ impl<State> UiComponent<State> for OptionUi<State> {
     fn draw(&self, ui: Rc<RefCell<&mut UiController>>, state: &State) {
         let fb = ui.borrow_mut().context.get_framebuffer_ref();
 
-        text::draw_text(fb, self.title_position, TextAlignment::Left, self.text_size, color::BLACK, &self.title);
+        text::draw_text(
+            fb,
+            self.title_position,
+            TextAlignment::Left,
+            self.text_size,
+            color::BLACK,
+            &self.title,
+        );
 
         for i in 0..self.option_names.len() {
             if i == self.selected {
-                fb.fill_rect(self.box_starts[i],  self.box_size, color::BLACK);
-                text::draw_text(fb, self.box_starts[i] + self.text_offset, TextAlignment::Centered, self.text_size, color::WHITE, &self.option_names[i]);
+                fb.fill_rect(self.box_starts[i], self.box_size, color::BLACK);
+                text::draw_text(
+                    fb,
+                    self.box_starts[i] + self.text_offset,
+                    TextAlignment::Centered,
+                    self.text_size,
+                    color::WHITE,
+                    &self.option_names[i],
+                );
             } else {
-                fb.fill_rect(self.box_starts[i],  self.box_size, color::WHITE);
-                drawing::draw_rect(fb, self.box_starts[i],  self.box_size, 2);
-                text::draw_text(fb, self.box_starts[i] + self.text_offset, TextAlignment::Centered, self.text_size, color::BLACK, &self.option_names[i]);
+                fb.fill_rect(self.box_starts[i], self.box_size, color::WHITE);
+                drawing::draw_rect(fb, self.box_starts[i], self.box_size, 2);
+                text::draw_text(
+                    fb,
+                    self.box_starts[i] + self.text_offset,
+                    TextAlignment::Centered,
+                    self.text_size,
+                    color::BLACK,
+                    &self.option_names[i],
+                );
             }
         }
 
@@ -114,7 +160,7 @@ impl<State> UiComponent<State> for OptionUi<State> {
             display_temp::TEMP_USE_REMARKABLE_DRAW,
             dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
             DRAWING_QUANT_BIT,
-            false
+            false,
         );
     }
 }

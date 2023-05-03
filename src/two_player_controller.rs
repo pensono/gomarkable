@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-use cgmath::Point2;
 use crate::game_controller::{ControllerOption, GameController};
 use crate::go::BoardState;
 use crate::utility::vec_of_strings;
-
+use cgmath::Point2;
+use std::collections::HashMap;
 
 pub struct TwoPlayerController {
     state: BoardState,
@@ -19,12 +18,14 @@ impl TwoPlayerController {
     }
 }
 
-
 pub fn options() -> Vec<ControllerOption> {
     vec![
         ControllerOption::new("Board Size", vec!["9x9", "13x13", "19x19"]),
         ControllerOption::new("Clock", vec!["Blitz", "Rapid", "None"]),
-        ControllerOption::new("Handicap", vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]),
+        ControllerOption::new(
+            "Handicap",
+            vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        ),
     ]
 }
 

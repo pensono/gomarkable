@@ -1,10 +1,12 @@
+use libremarkable::appctx::ApplicationContext;
+use libremarkable::framebuffer::common::{
+    display_temp, dither_mode, waveform_mode, DRAWING_QUANT_BIT,
+};
+use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh};
+use libremarkable::input::InputEvent;
 use std::cell::RefCell;
 use std::rc::Rc;
-use libremarkable::appctx::ApplicationContext;
-use libremarkable::input::InputEvent;
 use std::sync::atomic::AtomicBool;
-use libremarkable::framebuffer::common::{display_temp, dither_mode, DRAWING_QUANT_BIT, waveform_mode};
-use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh};
 
 pub struct UiController<'a> {
     pub context: ApplicationContext<'a>,
@@ -13,7 +15,10 @@ pub struct UiController<'a> {
 }
 
 impl<'a> UiController<'a> {
-    pub fn new(context: ApplicationContext, initial_scene: Rc<RefCell<dyn SceneTrait>>) -> UiController {
+    pub fn new(
+        context: ApplicationContext,
+        initial_scene: Rc<RefCell<dyn SceneTrait>>,
+    ) -> UiController {
         UiController {
             context,
             current_scene: initial_scene,
@@ -32,39 +37,47 @@ impl<'a> UiController<'a> {
         let mut scene = self_.clone().borrow_mut().current_scene.clone();
         scene.borrow_mut().draw(self_.clone());
 
-        self_.borrow_mut().context.get_framebuffer_ref().full_refresh(
-            waveform_mode::WAVEFORM_MODE_INIT,
-            display_temp::TEMP_USE_MAX,
-            dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
-            DRAWING_QUANT_BIT,
-            true
-        );
+        self_
+            .borrow_mut()
+            .context
+            .get_framebuffer_ref()
+            .full_refresh(
+                waveform_mode::WAVEFORM_MODE_INIT,
+                display_temp::TEMP_USE_MAX,
+                dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+                DRAWING_QUANT_BIT,
+                true,
+            );
     }
 
     pub fn start(self_: Rc<RefCell<&mut Self>>) {
         UiController::full_refresh(self_.clone());
 
         let context = self_.borrow_mut().context.upgrade_ref();
-        context.start_event_loop(false, true, false, |ctx: &mut ApplicationContext, event: InputEvent| {
-            let mut scene = self_.clone().borrow_mut().current_scene.clone();
-            scene.borrow_mut().handle_event(self_.clone(), event);
-
-            if self_.borrow_mut().pending_scene_change {
-                UiController::full_refresh(self_.clone());
-                self_.borrow_mut().pending_scene_change = false;
-            }
-
-            while needs_redraw() {
-                reset_redraw();
+        context.start_event_loop(
+            false,
+            true,
+            false,
+            |ctx: &mut ApplicationContext, event: InputEvent| {
                 let mut scene = self_.clone().borrow_mut().current_scene.clone();
-                scene.borrow_mut().draw(self_.clone());
-            }
-        });
+                scene.borrow_mut().handle_event(self_.clone(), event);
+
+                if self_.borrow_mut().pending_scene_change {
+                    UiController::full_refresh(self_.clone());
+                    self_.borrow_mut().pending_scene_change = false;
+                }
+
+                while needs_redraw() {
+                    reset_redraw();
+                    let mut scene = self_.clone().borrow_mut().current_scene.clone();
+                    scene.borrow_mut().draw(self_.clone());
+                }
+            },
+        );
     }
 }
 
-pub struct Scene<State: ?Sized>
-{
+pub struct Scene<State: ?Sized> {
     components: Vec<Box<dyn UiComponent<State>>>,
     state: Box<State>,
 }
@@ -102,10 +115,15 @@ impl<State> SceneTrait for Scene<State> {
 }
 
 pub trait UiComponent<State: ?Sized> {
-    fn handle_event(&mut self, ui: Rc<RefCell<&mut UiController>>, state: &mut State, event: &InputEvent) {}
+    fn handle_event(
+        &mut self,
+        ui: Rc<RefCell<&mut UiController>>,
+        state: &mut State,
+        event: &InputEvent,
+    ) {
+    }
     fn draw(&self, ui: Rc<RefCell<&mut UiController>>, state: &State);
 }
-
 
 static NEEDS_REDRAW: AtomicBool = AtomicBool::new(false);
 
@@ -120,4 +138,3 @@ pub fn needs_redraw() -> bool {
 pub fn reset_redraw() {
     NEEDS_REDRAW.store(false, std::sync::atomic::Ordering::SeqCst);
 }
-

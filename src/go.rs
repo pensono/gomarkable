@@ -1,5 +1,5 @@
+use cgmath::{point2, Point2};
 use std::collections::HashSet;
-use cgmath::{Point2, point2};
 
 // An enum for each player
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -1,14 +1,16 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use cgmath::{Point2, point2, vec2, Vector2};
+use crate::drawing;
+use crate::ui::{UiComponent, UiController};
+use cgmath::{point2, vec2, Point2, Vector2};
 use libremarkable::appctx::ApplicationContext;
-use libremarkable::framebuffer::common::{display_temp, dither_mode, DRAWING_QUANT_BIT, mxcfb_rect, waveform_mode};
+use libremarkable::framebuffer::common::{
+    display_temp, dither_mode, mxcfb_rect, waveform_mode, DRAWING_QUANT_BIT,
+};
 use libremarkable::framebuffer::{FramebufferRefresh, PartialRefreshMode};
 use libremarkable::image;
 use libremarkable::image::RgbImage;
 use libremarkable::input::{InputEvent, MultitouchEvent};
-use crate::{drawing};
-use crate::ui::{UiComponent, UiController};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct QuitUi {
     image: RgbImage,
@@ -19,7 +21,9 @@ pub struct QuitUi {
 impl QuitUi {
     pub fn new(ctx: &ApplicationContext) -> QuitUi {
         let (screen_height, screen_width) = ctx.get_dimensions();
-        let image = image::load_from_memory(include_bytes!("../assets/quit.png")).unwrap().to_rgb8();
+        let image = image::load_from_memory(include_bytes!("../assets/quit.png"))
+            .unwrap()
+            .to_rgb8();
 
         QuitUi {
             position: point2((screen_width - image.width()) as i32, 0),
@@ -30,10 +34,14 @@ impl QuitUi {
 }
 
 impl<State> UiComponent<State> for QuitUi {
-    fn handle_event(self: &mut QuitUi, ui: Rc<RefCell<&mut UiController>>, _: &mut State, event: &InputEvent) {
+    fn handle_event(
+        self: &mut QuitUi,
+        ui: Rc<RefCell<&mut UiController>>,
+        _: &mut State,
+        event: &InputEvent,
+    ) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
-            if let MultitouchEvent::Release { finger } = event
-            {
+            if let MultitouchEvent::Release { finger } = event {
                 if finger.pos.x >= self.position.x as u16 && finger.pos.y < self.size.y as u16 {
                     // TODO only exit scene
                     std::process::exit(0);
@@ -62,7 +70,7 @@ impl<State> UiComponent<State> for QuitUi {
             display_temp::TEMP_USE_REMARKABLE_DRAW,
             dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
             DRAWING_QUANT_BIT,
-            false
+            false,
         );
     }
 }
