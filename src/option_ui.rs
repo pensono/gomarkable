@@ -9,10 +9,11 @@ use libremarkable::framebuffer::common::{
 use libremarkable::framebuffer::{FramebufferDraw, FramebufferRefresh, PartialRefreshMode};
 use libremarkable::input::{InputEvent, MultitouchEvent};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::string::String;
 
-pub struct OptionUi<State> {
+pub struct OptionUi {
     option_names: Vec<String>,
     selected: usize,
     box_starts: Vec<Point2<i32>>,
@@ -22,17 +23,17 @@ pub struct OptionUi<State> {
     text_size: i32,
     title: String,
     title_position: Point2<i32>,
-    callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut State, &String)>,
+    callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut HashMap<String, String>, &String)>,
 }
 
-impl<State> OptionUi<State> {
+impl OptionUi {
     pub fn new(
         ctx: &ApplicationContext,
         vertical_position: i32,
         title: String,
         option_names: Vec<String>,
-        callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut State, &String)>,
-    ) -> OptionUi<State> {
+        callback: Box<dyn Fn(Rc<RefCell<&mut UiController>>, &mut HashMap<String, String>, &String)>,
+    ) -> OptionUi {
         let minimum_border = 250;
         let title_offset = vec2(30, -50);
         let height = 80;
@@ -80,11 +81,15 @@ impl<State> OptionUi<State> {
     }
 }
 
-impl<State> UiComponent<State> for OptionUi<State> {
+impl UiComponent<HashMap<String, String>> for OptionUi {
+    fn initialize(&mut self, _state: &mut HashMap<String, String>) {
+        self.selected = self.option_names.iter().position(|name| name == &_state[&self.title]).unwrap();
+    }
+
     fn handle_event(
         &mut self,
         ui: Rc<RefCell<&mut UiController>>,
-        state: &mut State,
+        state: &mut HashMap<String, String>,
         event: &InputEvent,
     ) {
         if let InputEvent::MultitouchEvent { event, .. } = event {
@@ -98,7 +103,11 @@ impl<State> UiComponent<State> for OptionUi<State> {
                         && finger.pos.y < box_end.y as u16
                     {
                         self.selected = i;
-                        (self.callback)(ui.clone(), state, &self.option_names[self.selected]);
+
+                        let selected_option = &self.option_names[self.selected];
+                        state.insert(self.title.clone(), selected_option.clone());
+
+                        (self.callback)(ui.clone(), state, selected_option);
 
                         ui::post_redraw();
                     }
@@ -107,7 +116,7 @@ impl<State> UiComponent<State> for OptionUi<State> {
         }
     }
 
-    fn draw(&self, ui: Rc<RefCell<&mut UiController>>, _state: &State) {
+    fn draw(&self, ui: Rc<RefCell<&mut UiController>>, _state: &HashMap<String, String>) {
         let fb = ui.borrow_mut().context.get_framebuffer_ref();
 
         text::draw_text(

@@ -21,6 +21,7 @@ pub fn options() -> Vec<ControllerOption> {
     vec![
         ControllerOption::new("Board Size", vec!["9x9", "13x13", "19x19"]),
         ControllerOption::new("Difficulty", vec!["Easy", "Medium", "Hard"]),
+        ControllerOption::new("Handicap", vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]),
     ]
 }
 

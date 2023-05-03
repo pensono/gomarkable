@@ -28,6 +28,7 @@ impl<'a> UiController<'a> {
 
     pub fn change_scene(self_: Rc<RefCell<&mut Self>>, new_scene: Rc<RefCell<dyn SceneTrait>>) {
         self_.borrow_mut().current_scene = new_scene;
+        self_.borrow_mut().current_scene.borrow_mut().initialize();
         self_.borrow_mut().pending_scene_change = true;
     }
 
@@ -83,6 +84,7 @@ pub struct Scene<State: ?Sized> {
 }
 
 pub trait SceneTrait {
+    fn initialize(&mut self);
     fn draw(&self, ui: Rc<RefCell<&mut UiController>>);
     fn handle_event(&mut self, ui: Rc<RefCell<&mut UiController>>, event: InputEvent);
 }
@@ -101,6 +103,12 @@ impl<State> Scene<State> {
 }
 
 impl<State> SceneTrait for Scene<State> {
+    fn initialize(&mut self) {
+        for component in self.components.iter_mut() {
+            component.initialize(&mut self.state);
+        }
+    }
+
     fn draw(&self, ui: Rc<RefCell<&mut UiController>>) {
         for component in &self.components {
             component.draw(ui.clone(), &self.state);
@@ -115,6 +123,7 @@ impl<State> SceneTrait for Scene<State> {
 }
 
 pub trait UiComponent<State: ?Sized> {
+    fn initialize(&mut self, _state: &mut State) {}
     fn handle_event(
         &mut self,
         _ui: Rc<RefCell<&mut UiController>>,

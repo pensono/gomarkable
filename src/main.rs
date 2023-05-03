@@ -25,10 +25,18 @@ mod utility;
 fn main() {
     let ctx = ApplicationContext::default();
 
+    let mut initial_settings : HashMap<String, String> = HashMap::new();
+    initial_settings.insert("Mode".to_string(), "2-Player".to_string());
+    initial_settings.insert("Board Size".to_string(), "19x19".to_string());
+    initial_settings.insert("Difficulty".to_string(), "Medium".to_string());
+    initial_settings.insert("Handicap".to_string(), "0".to_string());
+    initial_settings.insert("Clock".to_string(), "Rapid".to_string());
+    initial_settings.insert("".to_string(), "Play".to_string()); // Dummy for play
+
     let menu = create_menu_scene(
         &ctx,
         two_player_controller::options(),
-        "2-Player".to_string(),
+        initial_settings,
     );
     let mut controller = UiController::new(ctx, Rc::from(RefCell::new(menu)));
     let ui = Rc::from(RefCell::new(&mut controller));
@@ -38,23 +46,21 @@ fn main() {
 fn create_menu_scene(
     ctx: &ApplicationContext,
     options: Vec<ControllerOption>,
-    mode: String,
+    mut state: HashMap<String, String>
 ) -> ui::Scene<HashMap<String, String>> {
-    let mut state = HashMap::new();
-    state.insert("Mode".to_string(), mode.clone());
     let mut menu = ui::Scene::new(state);
 
     menu.add(option_ui::OptionUi::new(
         ctx,
         400i32,
-        "".to_string(),
+        "Mode".to_string(),
         vec_of_strings!["1-Player", "2-Player", "OGS"],
         Box::new(
             |ui: Rc<RefCell<&mut UiController>>,
              _state: &mut HashMap<String, String>,
              value: &String| {
                 let options = controller_options_from_name(&*value);
-                let scene = create_menu_scene(&ui.borrow_mut().context, options, value.clone());
+                let scene = create_menu_scene(&ui.borrow_mut().context, options, _state.clone());
                 UiController::change_scene(ui, Rc::from(RefCell::new(scene)));
             },
         ),
@@ -62,7 +68,6 @@ fn create_menu_scene(
 
     let mut position = 600i32;
     for option in options {
-        let option_name_copy = option.name.clone();
         menu.add(option_ui::OptionUi::new(
             ctx,
             position,
@@ -72,7 +77,6 @@ fn create_menu_scene(
                 move |_ui: Rc<RefCell<&mut UiController>>,
                       state: &mut HashMap<String, String>,
                       value: &String| {
-                    state.insert(option_name_copy.clone(), value.clone());
                 },
             ),
         ));
